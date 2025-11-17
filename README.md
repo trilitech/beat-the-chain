@@ -24,14 +24,18 @@ It's like being told "you're next in line" at lightning speed — no bidding, no
 
 - **Race the Pacer:** Type the full text before the green blocks are completely formed.
 - **Accuracy is Key:** Your Final Score is (LPS × Accuracy). Sloppy typing won't win.
-- **Get a Rank:** You MUST have 90%+ accuracy to earn a rank.
+- **Get a Rank:** Your rank is based on your typing speed. Faster typing = better blockchain rank!
 
 ### Ranks
 
-- **Pro:** < 150ms / letter (Insane!)
-- **Sub-blocks:** 150-200ms / letter (You proved your speed!)
-- **Etherlink:** 201-500ms / letter (Solid speed)
-- **Beginner:** > 500ms / letter (or < 90% acc)
+Your typing speed determines which blockchain you match:
+
+- **Unichain/Base/Etherlink:** 150-200ms / letter (Lightning fast!)
+- **Solana:** 201-400ms / letter (Super fast!)
+- **ETH Layer2s:** 401-1000ms / letter (Fast!)
+- **Polygon:** 1001-2000ms / letter (Quick!)
+- **Ethereum Mainnet:** 2001-12000ms / letter (Standard speed)
+- **Bitcoin:** > 12000ms / letter (Slow and steady)
 
 ## Getting Started
 
