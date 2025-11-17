@@ -53,7 +53,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
               <div className="mt-6 text-dark-main font-mono">
                 <h2 className="text-xl font-bold">Beat the speed of Etherlink's Sub-blocks</h2>
                 <p className="mt-2 text-dark-dim">
-                  Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">10–20 milliseconds</span>.
+                  Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">&lt;=200 milliseconds</span>.
                 </p>
                 <p className="mt-2 text-dark-dim">
                   We built this game to help you feel that speed. The pacer bar moves at 200ms per letter. Your goal is to beat it.
