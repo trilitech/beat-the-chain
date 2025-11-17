@@ -2,6 +2,8 @@
 
 A typing game inspired by [monkeytype](https://monkeytype.com) that gives users a visual representation of sub-block confirmations on [Etherlink](https://etherlink.com).
 
+**[🎮 Play the game →](https://beat-the-chain-zeta.vercel.app/)**
+
 [Etherlink](https://etherlink.com) is a [Tezos](https://tezos.com) EVM-compatible L2 that brings Ethereum compatibility to the Tezos ecosystem. Learn more about Etherlink's latest upgrade, [Ebisu](https://medium.com/@etherlink/announcing-ebisu-a-5th-upgrade-proposal-for-etherlink-mainnet-4dfdd1c8819e), which introduces sub-block latency features.
 
 ## What It Is
@@ -39,7 +41,23 @@ Your typing speed determines which blockchain you match:
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Before running the project, you need to set up Supabase environment variables:
+
+1. Create a `.env.local` file in the project root directory
+2. Add your Supabase credentials:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+```
+
+⚠️ **Important**: Never commit `.env.local` to git! It's already in `.gitignore`.
+
+### Running the Development Server
+
+Once your environment variables are set up, run the development server:
 
 ```bash
 npm run dev
