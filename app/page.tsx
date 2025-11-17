@@ -1,7 +1,7 @@
 "use client"; // This is CRITICAL for React Hooks to work in the App Router
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, Variants, HTMLMotionProps } from "framer-motion";
 import Link from "next/link";
 import html2canvas from "html2canvas";
 import dictionary from "../lib/dictionary";
@@ -65,6 +65,71 @@ type GameState = {
   testFinished: boolean;
 };
 
+// Wavy Text Component
+interface WavyTextProps extends HTMLMotionProps<"span"> {
+  text: string;
+  delay?: number;
+  replay: boolean;
+  duration?: number;
+}
+
+const WavyTextComponent = ({
+  text,
+  delay = 0,
+  duration = 0.05,
+  replay,
+  ...props
+}: WavyTextProps) => {
+  const letters = Array.from(text);
+
+  const container: Variants = {
+    hidden: {
+      opacity: 0
+    },
+    visible: (i: number = 1) => ({
+      opacity: 1,
+      transition: { staggerChildren: duration, delayChildren: i * delay }
+    })
+  };
+
+  const child: Variants = {
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200
+      }
+    },
+    hidden: {
+      opacity: 0,
+      y: 20,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200
+      }
+    }
+  };
+
+  return (
+    <motion.span
+      style={{ display: "inline-flex", overflow: "hidden" }}
+      variants={container}
+      initial="hidden"
+      animate={replay ? "visible" : "hidden"}
+      {...props}
+    >
+      {letters.map((letter, index) => (
+        <motion.span key={index} variants={child}>
+          {letter === " " ? "\u00A0" : letter}
+        </motion.span>
+      ))}
+    </motion.span>
+  );
+};
+
 // --- COMPONENT ---
 export default function Home() {
   const [bannerVisible, setBannerVisible] = useState(true);
@@ -84,6 +149,7 @@ export default function Home() {
   const [hoveredMode, setHoveredMode] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [wavyReplay, setWavyReplay] = useState(false);
 
   const appBodyRef = useRef<HTMLDivElement>(null);
   const wordsRef = useRef<HTMLDivElement>(null);
@@ -402,6 +468,24 @@ export default function Home() {
     initGame();
   }, [gameMode, initGame]);
 
+  // Continuously trigger wavy animation
+  useEffect(() => {
+    if (bannerVisible) {
+      const interval = setInterval(() => {
+        setWavyReplay(false);
+        setTimeout(() => setWavyReplay(true), 50);
+      }, 2000); // Repeat every 2 seconds
+      return () => clearInterval(interval);
+    }
+  }, [bannerVisible]);
+
+  // Initial trigger
+  useEffect(() => {
+    if (bannerVisible) {
+      setWavyReplay(true);
+    }
+  }, [bannerVisible]);
+
   const handleRestart = useCallback(() => {
     initGame();
     appBodyRef.current?.focus();
@@ -549,7 +633,7 @@ export default function Home() {
       </AnimatePresence>
 
       {bannerVisible && (
-        <div className="bg-dark-highlight flex items-center justify-center px-4 py-2 text-sm text-black">
+        <div className="bg-gradient-to-r from-dark-highlight via-green-400 to-dark-highlight flex items-center justify-center px-4 py-2 text-sm text-black">
           <span>
             Are you faster than{" "}
             <a
@@ -558,9 +642,10 @@ export default function Home() {
               rel="noopener noreferrer"
               className="font-bold underline"
             >
-              Etherlink sublocks
+              Etherlink Sub-blocks
             </a>
-            ?
+            ? Go Ahead!{" "}
+            <WavyTextComponent text="Beat the Chain!" replay={wavyReplay} className="font-bold" />
           </span>
         </div>
       )}
@@ -965,7 +1050,7 @@ export default function Home() {
                 <i className="fa fa-twitter h-4 w-4" />
                 <span>twitter</span>
               </a>
-              <a href="#" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
+              <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
                 <i className="fa fa-info-circle h-4 w-4" />
                 <span>terms</span>
               </a>
@@ -973,14 +1058,16 @@ export default function Home() {
                 <i className="fa fa-shield h-4 w-4" />
                 <span>security</span>
               </a>
-              <a href="#" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
+              <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
                 <i className="fa fa-lock h-4 w-4" />
                 <span>privacy</span>
               </a>
             </div>
             <div className="flex space-x-2 text-dark-dim">
               <span>etherlink</span>
-              <span>v: 6.0.0</span>
+              <a href="https://medium.com/@etherlink/announcing-ebisu-a-5th-upgrade-proposal-for-etherlink-mainnet-4dfdd1c8819e" target="_blank" rel="noopener noreferrer" className="hover:text-dark-highlight transition-colors">
+                <span>v:5.0.0 ebisu</span>
+              </a>
             </div>
           </div>
         </footer>
