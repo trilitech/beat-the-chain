@@ -125,7 +125,9 @@ export default function LeaderboardPage() {
                     >
                       <div className="text-left">
                         <div className="text-dark-dim">#{startIndex + idx + 1}</div>
-                        <div className="text-xs text-dark-highlight">{leader.rank}</div>
+                        <div className="text-xs text-dark-highlight">
+                          {leader.rank === "Unichain/base/etherlink" ? "Sub-blocks" : leader.rank}
+                        </div>
                       </div>
                       <div className="col-span-2 text-left">
                         <div>{leader.player_name}</div>
