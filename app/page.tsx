@@ -484,6 +484,38 @@ export default function Home() {
     };
   }, [showUserMenu]);
 
+  // Adjust dropdown position to prevent overflow
+  useEffect(() => {
+    if (showUserMenu && userMenuRef.current) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (!userMenuRef.current) return;
+        
+        const dropdown = userMenuRef.current;
+        const rect = dropdown.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const padding = 16; // Padding from viewport edge
+        
+        // Check for overflow on both sides
+        const overflowRight = rect.right > viewportWidth - padding;
+        const overflowLeft = rect.left < padding;
+        
+        if (overflowRight && !overflowLeft) {
+          // Overflow on right, shift left
+          const overflow = rect.right - (viewportWidth - padding);
+          dropdown.style.left = `calc(50% - ${overflow}px)`;
+        } else if (overflowLeft && !overflowRight) {
+          // Overflow on left, shift right
+          const overflow = padding - rect.left;
+          dropdown.style.left = `calc(50% + ${overflow}px)`;
+        } else {
+          // No overflow or both sides overflow (use default centered)
+          dropdown.style.left = '50%';
+        }
+      });
+    }
+  }, [showUserMenu]);
+
   const handleKeydown = useCallback(
     (event: KeyboardEvent) => {
       // NEW: Block all game input if overlay is visible
@@ -965,20 +997,27 @@ export default function Home() {
               </button>
               {/* User Profile Dropdown */}
               <AnimatePresence>
-                {showUserMenu && playerName && playerName !== "you" && (
+                {showUserMenu && (
                   <motion.div
                     ref={userMenuRef}
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.1 }}
-                    className="absolute right-0 top-full mt-2 w-64 rounded-lg bg-dark-kbd border border-dark-dim/20 shadow-2xl z-50 overflow-hidden"
+                    className="absolute top-full mt-2 w-64 rounded-lg bg-dark-kbd border border-dark-dim/20 shadow-2xl z-50 overflow-hidden"
+                    style={{ 
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      maxWidth: 'min(256px, calc(100vw - 3rem))'
+                    }}
                   >
                     <div className="p-4 space-y-3 font-mono">
-                      <div className="border-b border-dark-dim/20 pb-3">
-                        <div className="text-sm text-dark-dim mb-1">name</div>
-                        <div className="text-lg font-bold text-dark-highlight">{playerName}</div>
-                      </div>
+                      {playerName && playerName !== "you" && (
+                        <div className="border-b border-dark-dim/20 pb-3">
+                          <div className="text-sm text-dark-dim mb-1">name</div>
+                          <div className="text-lg font-bold text-dark-highlight">{playerName}</div>
+                        </div>
+                      )}
                       {userProfile ? (
                         <>
                           <div className="grid grid-cols-2 gap-3">
