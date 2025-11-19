@@ -208,6 +208,7 @@ export default function Home() {
   const [results, setResults] = useState<Results>(DEFAULT_RESULTS);
   const [gameMode, setGameMode] = useState<GameMode>(15);
   const [textFocused, setTextFocused] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   // NEW: State for overlay and player name
   const [showOverlay, setShowOverlay] = useState(false); // Will be set based on localStorage check
@@ -381,7 +382,7 @@ export default function Home() {
     let rank = "Bitcoin";
     if (effectiveMsPerLetter <= 200) rank = "Sub-blocks";
     else if (effectiveMsPerLetter <= 400) rank = "Solana";
-    else if (effectiveMsPerLetter <= 1000) rank = "ETH Layer 2's";
+    else if (effectiveMsPerLetter <= 1000) rank = "ETH L2s";
     else if (effectiveMsPerLetter <= 2000) rank = "Polygon";
     else if (effectiveMsPerLetter <= 12000) rank = "Ethereum Mainnet";
     else rank = "Bitcoin";
@@ -810,6 +811,88 @@ export default function Home() {
         {showOverlay && <OnboardingOverlay onComplete={handleOnboardingComplete} />}
       </AnimatePresence>
 
+      {/* How to Play Overlay */}
+      <AnimatePresence>
+        {showHowToPlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowHowToPlay(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-lg bg-dark-kbd p-8 shadow-2xl border border-dark-dim/20 mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="pb-5">
+                <h1 className="text-4xl font-bold text-dark-highlight font-nfs text-center">
+                  Proof of Speed
+                </h1>
+
+                <div className="mt-6 text-dark-main font-mono">
+                  <p className="mt-2 text-dark-dim">
+                    Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">&lt;=200 milliseconds</span>.
+                  </p>
+                  <p className="mt-2 text-dark-dim">
+                    We built this game to help you feel that speed. The pacer bar moves at 200ms per letter. Your goal is to beat it.
+                  </p>
+        </div>
+
+                <div className="mt-6 text-dark-main font-mono">
+                  <h2 className="text-xl font-bold">How to Win</h2>
+                  <ol className="list-none space-y-3 mt-3 text-dark-dim">
+                    <li className="flex items-center">
+                      <i className="fa fa-tachometer h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
+                      <span><span className="font-bold text-dark-main">Race the Pacer:</span> Type the full text before the green blocks are completely formed.</span>
+                    </li>
+                    <li className="flex items-center">
+                      <i className="fa fa-trophy h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
+                      <span><span className="font-bold text-dark-main">Get a Rank:</span> Your rank is based on your typing speed and accuracy.</span>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="mt-6 rounded-lg border border-dark-dim/30 bg-dark-bg/50 p-4 text-sm font-mono">
+                  <div className="text-dark-main">
+                    <div className="mb-1">
+                      <span className="font-bold text-dark-highlight">Blockchain Speed Ranks</span>
+                    </div>
+                    <div className="text-dark-dim">
+                      Your typing speed determines which blockchain you match. Can you beat Unichain's 200ms?
+                    </div>
+                  </div>
+                  <ul className="list-disc list-inside pl-4 mt-3 space-y-1 text-sm text-dark-dim">
+                    <li><span className="font-bold text-dark-main">Unichain/Base/Etherlink:</span> 150-200ms / letter (Lightning fast!)</li>
+                    <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms / letter (Super fast!)</li>
+                    <li><span className="font-bold text-dark-main">ETH Layer2s:</span> 401-1000ms / letter (Fast!)</li>
+                    <li><span className="font-bold text-dark-main">Polygon:</span> 1001-2000ms / letter (Quick!)</li>
+                    <li><span className="font-bold text-dark-main">Ethereum Mainnet:</span> 2001-12000ms / letter (Standard speed)</li>
+                    <li><span className="font-bold text-dark-main">Bitcoin:</span> &gt; 12000ms / letter (Slow and steady)</li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setShowHowToPlay(false)}
+                    className="rounded-md border border-dark-dim/30 bg-dark-highlight py-2 px-4 text-sm font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer flex items-center justify-center"
+                    style={{ backgroundColor: "#39ff9c" }}
+                  >
+                    <span className="font-mono mr-6">Close</span>
+                    <i className="fa-solid fa-times h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
       <div id="app-content" className="flex flex-grow flex-col">
         <header className="p-6">
@@ -817,7 +900,7 @@ export default function Home() {
             <div className="flex items-center space-x-6">
               <button 
                 onClick={initGame}
-                className="flex items-center space-x-3 text-dark-highlight hover:opacity-80 transition-opacity cursor-pointer"
+                className="hidden items-center space-x-3 text-dark-highlight hover:opacity-80 transition-opacity cursor-pointer"
                 title="Reset game"
               >
                 <img src="/etherlink-desktop-logo.svg" alt="Etherlink" className="h-12 w-auto" />
@@ -953,12 +1036,22 @@ export default function Home() {
               </div>
               </div>
             </div>
+            <a
+              href="https://etherlink.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 text-dark-dim hover:text-dark-highlight transition-colors font-mono text-sm"
+              title="Explore Etherlink"
+            >
+              <span>Explore Etherlink</span>
+              <i className="fa-solid fa-arrow-up-right-from-square h-4 w-4" />
+            </a>
           </nav>
         </header>
 
         <div className="relative z-10 flex flex-col items-center px-6 py-4 space-y-4">
           <div className="text-center">
-            <span className="font-nfs text-3xl text-dark-highlight">Proof of Speed</span>
+            <span className="font-nfs text-[2.8125rem] text-dark-highlight">Proof of Speed</span>
           </div>
           <div className="flex items-center space-x-6 rounded-lg bg-dark-kbd p-2 text-sm font-mono">
             <button className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors" title="Time">
@@ -1201,7 +1294,7 @@ export default function Home() {
                   'Bitcoin': 0,
                   'Ethereum Mainnet': 20,
                   'Polygon': 40,
-                  'ETH Layer 2\'s': 60,
+                  'ETH L2s': 60,
                   'Solana': 80,
                   'Sub-blocks': 100,
                 };
@@ -1262,9 +1355,9 @@ export default function Home() {
                   { name: 'Bitcoin', ms: 600000, color: getBestContrastColor('btc', '#ff8c00'), icon: 'btc', displayTime: '10mins', gradientColor: '#F7931A' }, // Bitcoin orange from logo
                   { name: 'Ethereum', ms: 12000, color: getBestContrastColor('eth', '#ffd700'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' }, // Ethereum purple from logo
                   { name: 'Polygon', ms: 2000, color: getBestContrastColor('matic', '#7B3FE4'), icon: 'matic', displayTime: null, gradientColor: '#6F41D8' }, // Polygon purple from logo
-                  { name: 'ETH Layer 2\'s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' }, // Ethereum purple
+                  { name: 'ETH L2s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' }, // Ethereum purple
                   { name: 'Solana', ms: 400, color: getBestContrastColor('sol', '#DC1FFF'), icon: 'sol', displayTime: null, gradientColor: '#66F9A1' }, // Solana green from logo
-                  { name: 'Sub-blocks', ms: 200, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'xtz', displayTime: null, gradientColor: '#A6E000' }, // Tezos lime green from logo
+                  { name: 'Sub-blocks', ms: 200, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' }, // Etherlink logo
                 ];
                 
                 // Equal spacing: 0%, 20%, 40%, 60%, 80%, 100%
@@ -1393,7 +1486,7 @@ export default function Home() {
                                 {blockchain.icon && (
                                   <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
                                     <img 
-                                      src={`/crypto-icons/${blockchain.icon}.svg`}
+                                      src={blockchain.icon === 'etherlink' ? '/etherlink-logo.svg' : `/crypto-icons/${blockchain.icon}.svg`}
                                       alt={blockchain.name}
                                       className="w-5 h-5"
                                     />
@@ -1550,22 +1643,13 @@ export default function Home() {
           </div>
             <div className="flex justify-between text-sm">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              <a
-                href="mailto:reachout@etherlink.com"
+              <button
+                onClick={() => setShowHowToPlay(true)}
                 className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
               >
-                <i className="fa-solid fa-envelope h-4 w-4" />
-                <span>contact</span>
-              </a>
-              <a
-                href="https://github.com/etherlinkcom"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
-              >
-                <i className="fa-brands fa-github h-4 w-4" />
-                <span>github</span>
-              </a>
+                <i className="fa-solid fa-circle-question h-4 w-4" />
+                <span>how to play</span>
+              </button>
               <a
                 href="https://discord.gg/etherlink"
                 target="_blank"
@@ -1587,10 +1671,6 @@ export default function Home() {
               <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
                 <i className="fa-solid fa-circle-info h-4 w-4" />
                 <span>terms</span>
-              </a>
-              <a href="#" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
-                <i className="fa-solid fa-shield h-4 w-4" />
-                <span>security</span>
               </a>
               <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
                 <i className="fa-solid fa-lock h-4 w-4" />
