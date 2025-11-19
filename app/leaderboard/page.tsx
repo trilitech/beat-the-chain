@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { getLeaderboard } from "../../lib/scores";
 import type { LeaderboardEntry } from "../../lib/types";
+import Footer from "../../components/Footer";
 
 const GAME_MODES = [15, 30, 60] as const;
 type GameMode = typeof GAME_MODES[number];
@@ -118,28 +120,40 @@ export default function LeaderboardPage() {
                   <div className="text-right">lps</div>
                   <div className="text-right">acc</div>
                 </div>
-                <div className="divide-y divide-dark-kbd">
-                  {currentLeaders.map((leader, idx) => (
-                    <div
-                      key={leader.id}
-                      className="grid grid-cols-6 gap-3 px-4 py-3 text-sm font-mono"
-                    >
-                      <div className="text-left">
-                        <div className="text-dark-dim">#{startIndex + idx + 1}</div>
-                        <div className="text-xs text-dark-highlight">
-                          {leader.rank === "Unichain/base/etherlink" ? "Sub-blocks" : leader.rank}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentPage}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="divide-y divide-dark-kbd"
+                  >
+                    {currentLeaders.map((leader, idx) => (
+                      <motion.div
+                        key={leader.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.15, delay: idx * 0.02 }}
+                        className="grid grid-cols-6 gap-3 px-4 py-3 text-sm font-mono"
+                      >
+                        <div className="text-left">
+                          <div className="text-dark-dim">#{startIndex + idx + 1}</div>
+                          <div className="text-xs text-dark-highlight">
+                            {leader.rank === "Unichain/base/etherlink" ? "Sub-blocks" : leader.rank}
+                          </div>
                         </div>
-                      </div>
-                      <div className="col-span-2 text-left">
-                        <div>{leader.player_name}</div>
-                        <div className="text-xs text-dark-dim">{leader.game_mode} words</div>
-                      </div>
-                      <div className="text-right text-dark-main">{leader.score.toFixed(2)}</div>
-                      <div className="text-right text-dark-highlight">{leader.lps.toFixed(2)}</div>
-                      <div className="text-right text-dark-main">{leader.accuracy.toFixed(1)}%</div>
-                    </div>
-                  ))}
-                </div>
+                        <div className="col-span-2 text-left">
+                          <div>{leader.player_name}</div>
+                          <div className="text-xs text-dark-dim">{leader.game_mode} words</div>
+                        </div>
+                        <div className="text-right text-dark-main">{leader.score.toFixed(2)}</div>
+                        <div className="text-right text-dark-highlight">{leader.lps.toFixed(2)}</div>
+                        <div className="text-right text-dark-main">{leader.accuracy.toFixed(1)}%</div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Pagination Controls */}
@@ -211,64 +225,7 @@ export default function LeaderboardPage() {
         </div>
       </main>
 
-      <footer className="p-6">
-        <div className="flex justify-between text-sm">
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            <a
-              href="mailto:reachout@etherlink.com"
-              className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
-            >
-              <i className="fa fa-envelope h-4 w-4" />
-              <span>contact</span>
-            </a>
-            <a
-              href="https://github.com/etherlinkcom"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
-            >
-              <i className="fa fa-github h-4 w-4" />
-              <span>github</span>
-            </a>
-            <a
-              href="https://discord.gg/etherlink"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
-            >
-              <i className="fa fa-slack h-4 w-4" />
-              <span>discord</span>
-            </a>
-            <a
-              href="https://twitter.com/etherlink"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
-            >
-              <i className="fa fa-twitter h-4 w-4" />
-              <span>twitter</span>
-            </a>
-            <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
-              <i className="fa fa-info-circle h-4 w-4" />
-              <span>terms</span>
-            </a>
-            <a href="#" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
-              <i className="fa fa-shield h-4 w-4" />
-              <span>security</span>
-            </a>
-            <a href="https://tezos.com/privacy-notice/" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors">
-              <i className="fa fa-lock h-4 w-4" />
-              <span>privacy</span>
-            </a>
-          </div>
-          <div className="flex space-x-2 text-dark-dim">
-            <span>etherlink</span>
-            <a href="https://medium.com/@etherlink/announcing-ebisu-a-5th-upgrade-proposal-for-etherlink-mainnet-4dfdd1c8819e" target="_blank" rel="noopener noreferrer" className="hover:text-dark-highlight transition-colors">
-              <span>v:5.0.0 ebisu</span>
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
