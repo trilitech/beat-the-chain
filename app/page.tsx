@@ -430,10 +430,15 @@ export default function Home() {
     }
   }, [testFinished, fetchRankings]);
 
+  // Reset game when game mode changes
+  useEffect(() => {
+    initGame();
+  }, [gameMode, initGame]);
+
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
+        const target = event.target as HTMLElement;
       // Don't close if clicking on the settings button itself
       const settingsButton = target.closest('button[title="Settings"]');
       if (settingsButton) {
@@ -442,7 +447,7 @@ export default function Home() {
       
       // Close if clicking outside the menu
       if (userMenuRef.current && !userMenuRef.current.contains(target)) {
-        setShowUserMenu(false);
+          setShowUserMenu(false);
       }
     };
 
@@ -783,7 +788,16 @@ export default function Home() {
                 <img src="/etherlink-desktop-logo.svg" alt="Etherlink" className="h-12 w-auto" />
               </div>
               <div className="flex space-x-4">
-                <button className="text-dark-dim hover:text-dark-highlight transition-colors" title="start typing to play">
+                <button 
+                  onClick={() => {
+                    // Cycle through game modes: 15 -> 30 -> 60 -> 15
+                    const currentIndex = GAME_MODES.indexOf(gameMode);
+                    const nextIndex = (currentIndex + 1) % GAME_MODES.length;
+                    setGameMode(GAME_MODES[nextIndex]);
+                  }}
+                  className="text-dark-dim hover:text-dark-highlight transition-colors" 
+                  title="start typing to play"
+                >
                   <i className="fa-solid fa-keyboard h-6 w-6" />
                 </button>
                 <a
@@ -798,13 +812,14 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-dark-dim hover:text-dark-highlight transition-colors"
-                  title="About"
+                  title="About Etherlink Sub-blocks"
                 >
                   <i className="fa-solid fa-circle-info h-6 w-6" />
                 </a>
+              <div className="relative">
               <button
                 onClick={() => {
-                  // Toggle user profile menu
+                    // Toggle user profile menu
                   if (playerName && playerName !== "you") {
                     const profile = getUserProfile(playerName);
                     if (profile.hasProfile && profile.bestGameMode) {
@@ -820,15 +835,16 @@ export default function Home() {
                       setUserProfile(null);
                       setShowUserMenu(!showUserMenu);
                     }
-                  } else {
-                    // Still toggle the dropdown even if no player name
-                    setShowUserMenu(!showUserMenu);
+                    } else {
+                      // Still toggle the dropdown even if no player name
+                      setShowUserMenu(!showUserMenu);
                   }
                 }}
-                className="text-dark-dim hover:text-dark-highlight transition-colors relative cursor-pointer"
-                title="Settings"
+                  className="text-dark-dim hover:text-dark-highlight transition-colors cursor-pointer"
+                  title="Settings"
               >
                   <i className="fa-solid fa-gear h-6 w-6" />
+              </button>
               {/* User Profile Dropdown */}
               <AnimatePresence>
                 {showUserMenu && playerName && playerName !== "you" && (
@@ -891,7 +907,7 @@ export default function Home() {
                           onClick={handleResetPlayer}
                           className="w-full px-3 py-2 rounded-md bg-dark-bg hover:bg-dark-highlight hover:text-black text-dark-main text-sm font-mono transition-colors"
                         >
-                          <i className="fa-solid fa-rotate mr-2" />
+                            <i className="fa-solid fa-rotate mr-2" />
                           Reset player
                         </button>
                       </div>
@@ -899,7 +915,7 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
-                </button>
+              </div>
               </div>
             </div>
           </nav>

@@ -17,8 +17,9 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      onComplete(name.trim());
+    const trimmedName = name.trim();
+    if (trimmedName && trimmedName.length >= 3) {
+      onComplete(trimmedName);
     }
   };
 
@@ -35,7 +36,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-2xl rounded-lg bg-dark-kbd p-8 shadow-2xl border border-dark-dim/20"
+        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-lg bg-dark-kbd p-8 shadow-2xl border border-dark-dim/20 mx-4"
       >
         <AnimatePresence mode="wait">
           {step === "info" && (
@@ -117,6 +118,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
               exit={{ x: -20, opacity: 0 }}
               transition={{ duration: 0.3 }}
               onSubmit={handleSubmit}
+              className="max-w-md mx-auto"
             >
               <h1 className="text-3xl font-bold text-dark-highlight font-nfs text-center">
                 What's your name?
@@ -136,10 +138,16 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                 />
                 <i className="fa fa-user absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-dark-dim" />
               </div>
+              
+              {name.trim() && name.trim().length < 3 && (
+                <p className="text-center text-dark-dim mt-2 text-sm font-mono">
+                  Name must be at least 3 characters
+                </p>
+              )}
 
               <button
                 type="submit"
-                disabled={!name.trim()}
+                disabled={!name.trim() || name.trim().length < 3}
                 className="mt-6 mx-auto block rounded-full bg-dark-highlight py-3 px-6 text-lg font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Play
