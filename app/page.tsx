@@ -180,17 +180,10 @@ const PacerSquares = ({ totalLetters, testActive, speedMs, gameMode }: PacerSqua
             animate={{ 
               opacity: 1, 
               scale: 1,
-              backgroundColor: testActive 
-                ? ["#38ff9c", "#0d63f8", "#ff0088", "#38ff9c"]
-                : "#38ff9c"
+              backgroundColor: "#38ff9c"
             }}
             exit={{ opacity: 0, scale: 0 }}
             transition={{
-              backgroundColor: {
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear",
-              },
               opacity: { duration: 0.4 },
               scale: { type: "spring", duration: 0.4, bounce: 0.5 }
             }}
@@ -230,6 +223,7 @@ export default function Home() {
   const [wavyReplay, setWavyReplay] = useState(false);
   const [totalLetters, setTotalLetters] = useState(0);
   const [pacerResetKey, setPacerResetKey] = useState(0);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
 
   const appBodyRef = useRef<HTMLDivElement>(null);
   const wordsRef = useRef<HTMLDivElement>(null);
@@ -863,148 +857,132 @@ export default function Home() {
         <header className="p-6">
           <nav className="flex items-center justify-between text-xl">
             <div className="flex items-center space-x-6">
-              <button 
-                onClick={initGame}
-                className="hidden items-center space-x-3 text-dark-highlight hover:opacity-80 transition-opacity cursor-pointer"
-                title="Reset game"
-              >
-                <img src="/etherlink-desktop-logo.svg" alt="Etherlink" className="h-12 w-auto" />
-              </button>
-              <div className="flex space-x-4">
-                <button 
-                  onClick={() => {
-                    // Cycle through game modes: 15 -> 30 -> 60 -> 15
-                    const currentIndex = GAME_MODES.indexOf(gameMode);
-                    const nextIndex = (currentIndex + 1) % GAME_MODES.length;
-                    setGameMode(GAME_MODES[nextIndex]);
-                  }}
-                  className="text-dark-dim hover:text-dark-highlight transition-colors" 
-                  title="start typing to play"
+              <div className="flex flex-col space-y-4 font-mono text-sm">
+                <button
+                  onClick={initGame}
+                  className="text-dark-dim hover:text-dark-highlight transition-colors text-left"
                 >
-                  <i className="fa-solid fa-keyboard h-6 w-6" />
+                  New Game
                 </button>
-                <a
+                <Link
                   href="/leaderboard"
-                  className="text-dark-dim hover:text-dark-highlight transition-colors"
-                  title="Leaderboards"
+                  className="text-dark-dim hover:text-dark-highlight transition-colors text-left"
                 >
-                  <i className="fa-solid fa-star h-6 w-6" />
-                </a>
-                <a
-                  href="https://etherlink.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-dark-dim hover:text-dark-highlight transition-colors"
-                  title="About Etherlink Sub-blocks"
+                  Leaderboard
+                </Link>
+                <button
+                  onClick={() => setShowHowToPlay(true)}
+                  className="text-dark-dim hover:text-dark-highlight transition-colors text-left"
                 >
-                  <i className="fa-solid fa-circle-info h-6 w-6" />
-                </a>
-              <div className="relative">
-              <button
-                onClick={() => {
-                    // Toggle user profile menu
-                  if (playerName && playerName !== "you") {
-                    // Fetch all scores for all game modes
-                    getAllUserScores(playerName).then((result) => {
-                      if (result.data && result.data.length > 0) {
-                        setAllUserScores(result.data);
-                        // Set the best score as the primary profile (for backward compatibility)
-                        const bestScore = result.data.reduce((best, current) => 
-                          current.score > best.score ? current : best
-                        );
-                        setUserProfile(bestScore);
-                        } else {
+                  How to Play
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      // Toggle user profile menu
+                      if (playerName && playerName !== "you") {
+                        // Fetch all scores for all game modes
+                        getAllUserScores(playerName).then((result) => {
+                          if (result.data && result.data.length > 0) {
+                            setAllUserScores(result.data);
+                            // Set the best score as the primary profile (for backward compatibility)
+                            const bestScore = result.data.reduce((best, current) => 
+                              current.score > best.score ? current : best
+                            );
+                            setUserProfile(bestScore);
+                          } else {
+                            setAllUserScores([]);
+                            setUserProfile(null);
+                          }
+                          setShowUserMenu(!showUserMenu);
+                        });
+                      } else {
+                        // Still toggle the dropdown even if no player name
                         setAllUserScores([]);
-                          setUserProfile(null);
-                        }
+                        setUserProfile(null);
                         setShowUserMenu(!showUserMenu);
-                      });
-                    } else {
-                      // Still toggle the dropdown even if no player name
-                      setAllUserScores([]);
-                      setUserProfile(null);
-                      setShowUserMenu(!showUserMenu);
-                  }
-                }}
-                  className="text-dark-dim hover:text-dark-highlight transition-colors cursor-pointer"
-                  title="Settings"
-              >
-                  <i className="fa-solid fa-gear h-6 w-6" />
-              </button>
-              {/* User Profile Dropdown */}
-              <AnimatePresence>
-                {showUserMenu && (
-                  <motion.div
-                    ref={userMenuRef}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.1 }}
-                    className="absolute top-full mt-2 w-64 rounded-lg bg-dark-kbd border border-dark-dim/20 shadow-2xl z-50 overflow-hidden"
-                    style={{ 
-                      right: 0,
-                      transform: 'translateX(0)',
-                      maxWidth: 'min(256px, calc(100vw - 3rem))'
+                      }
                     }}
+                    className="text-dark-dim hover:text-dark-highlight transition-colors cursor-pointer text-left"
+                    title="Settings"
                   >
-                    <div className="p-4 space-y-3 font-mono">
-                      {playerName && playerName !== "you" && (
-                      <div className="border-b border-dark-dim/20 pb-3">
-                        <div className="text-sm text-dark-dim mb-1">name</div>
-                        <div className="text-lg font-bold text-dark-highlight">{playerName}</div>
-                      </div>
-                      )}
-                      {allUserScores.length > 0 ? (
-                        <>
-                          <div className="space-y-2">
-                            {allUserScores.map((score) => (
-                              <div key={score.game_mode} className="flex items-center justify-between">
-                                <div className="text-xs text-dark-dim">
-                                  {score.game_mode} words
+                    Settings
+                  </button>
+                  {/* User Profile Dropdown */}
+                  <AnimatePresence>
+                    {showUserMenu && (
+                      <motion.div
+                        ref={userMenuRef}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.1 }}
+                        className="absolute top-full mt-2 w-64 rounded-lg bg-dark-kbd border border-dark-dim/20 shadow-2xl z-50 overflow-hidden"
+                        style={{ 
+                          right: 0,
+                          transform: 'translateX(0)',
+                          maxWidth: 'min(256px, calc(100vw - 3rem))'
+                        }}
+                      >
+                        <div className="p-4 space-y-3 font-mono">
+                          {playerName && playerName !== "you" && (
+                            <div className="border-b border-dark-dim/20 pb-3">
+                              <div className="text-sm text-dark-dim mb-1">name</div>
+                              <div className="text-lg font-bold text-dark-highlight">{playerName}</div>
                             </div>
-                                <div className="text-sm font-bold text-dark-main">
-                                  {score.lps.toFixed(2)} lps
-                            </div>
-                            </div>
-                            ))}
-                            </div>
-                          {userProfile && (
-                            <div className="border-t border-dark-dim/20 pt-3 mt-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="text-xs text-dark-dim">best rank</div>
-                                <div className="text-sm font-bold text-dark-main">{userProfile.rank}</div>
-                          </div>
-                              <div className="flex items-center justify-between">
-                                <div className="text-xs text-dark-dim">best score</div>
-                                <div className="text-sm font-bold text-dark-main">{userProfile.score.toFixed(2)}</div>
+                          )}
+                          {allUserScores.length > 0 ? (
+                            <>
+                              <div className="space-y-2">
+                                {allUserScores.map((score) => (
+                                  <div key={score.game_mode} className="flex items-center justify-between">
+                                    <div className="text-xs text-dark-dim">
+                                      {score.game_mode} words
+                                    </div>
+                                    <div className="text-sm font-bold text-dark-main">
+                                      {score.lps.toFixed(2)} lps
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {userProfile && (
+                                <div className="border-t border-dark-dim/20 pt-3 mt-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div className="text-xs text-dark-dim">best rank</div>
+                                    <div className="text-sm font-bold text-dark-main">{userProfile.rank}</div>
+                                  </div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="text-xs text-dark-dim">best score</div>
+                                    <div className="text-sm font-bold text-dark-main">{userProfile.score.toFixed(2)}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="text-sm text-dark-dim">No scores yet</div>
+                          )}
+                          <div className="border-t border-dark-dim/20 pt-3 mt-3">
+                            <button
+                              onClick={handleResetPlayer}
+                              className="w-full px-3 py-2 rounded-md bg-dark-bg hover:bg-dark-highlight hover:text-black text-dark-main text-sm font-mono transition-colors"
+                            >
+                              <i className="fa-solid fa-rotate mr-2" />
+                              Reset player
+                            </button>
                           </div>
                         </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-sm text-dark-dim">No scores yet</div>
-                      )}
-                      <div className="border-t border-dark-dim/20 pt-3 mt-3">
-                        <button
-                          onClick={handleResetPlayer}
-                          className="w-full px-3 py-2 rounded-md bg-dark-bg hover:bg-dark-highlight hover:text-black text-dark-main text-sm font-mono transition-colors"
-                        >
-                            <i className="fa-solid fa-rotate mr-2" />
-                          Reset player
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
             <a
               href="https://etherlink.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-dark-dim hover:text-dark-highlight transition-colors font-mono text-sm"
+              className="flex items-center space-x-2 rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer"
+              style={{ backgroundColor: "#39ff9c" }}
               title="Explore Etherlink"
             >
               <span>Explore Etherlink</span>
@@ -1086,23 +1064,21 @@ export default function Home() {
         </div>
 
         <main className="relative z-0 -mt-16 flex flex-grow flex-col items-center justify-center group-[.test-finished]:overflow-y-auto group-[.test-finished]:justify-start group-[.test-finished]:py-8">
-          <button
-            id="language-btn"
-            className="mb-4 inline-flex items-center gap-2 text-sm text-dark-dim hover:text-dark-highlight font-mono lowercase tracking-wider transition-colors"
-          >
-            <i className="fa-solid fa-globe h-4 w-4" />
-            <span>english</span>
-          </button>
+            <button
+              id="language-btn"
+              className={`mb-4 inline-flex items-center gap-2 text-sm font-mono lowercase tracking-wider transition-colors ${
+                testStarted ? 'text-dark-dim hover:text-dark-highlight' : 'text-dark-highlight'
+              }`}
+            >
+              <i className="fa-solid fa-globe h-4 w-4" />
+              <span>Click or press the first letter to begin</span>
+            </button>
           
           <div
             id="test-area"
             className="relative flex min-h-[200px] w-full max-w-5xl items-center justify-center group-[.test-finished]:hidden"
             onClick={() => appBodyRef.current?.focus()}
           >
-            <div id="focus-message" className="absolute z-10 cursor-pointer text-lg font-mono group-[.test-started]:hidden">
-              Click or press the first letter to begin
-            </div>
-            
             <div id="words-wrapper" className="relative max-w-5xl mx-auto font-mono" style={{ paddingBottom: gameMode === 60 ? '4rem' : gameMode === 30 ? '3rem' : '2rem' }}>
               <div id="cursor" ref={cursorRef} className="animate-blink absolute mt-[-2px] h-[2.25rem] w-[2px] bg-dark-highlight transition-all duration-100 hidden group-[.test-started]:block z-10" />
               
@@ -1133,7 +1109,7 @@ export default function Home() {
                 gameMode={gameMode}
                   />
                   {testStarted && (
-                    <div className="absolute bottom-[-40px] left-0 text-sm text-dark-dim font-mono">
+                    <div className="absolute bottom-[-60px] left-0 text-sm text-dark-dim font-mono mt-4">
                       Creating Sub-blocks in &lt;200ms on Etherlink.......
                     </div>
               )}
@@ -1144,8 +1120,8 @@ export default function Home() {
           <div id="results-screen" ref={resultsScreenRef} className="text-center font-mono hidden group-[.test-finished]:block w-full max-w-4xl px-6">
             {/* 1. Big Score */}
             <div className="text-center mb-10">
-              <div className="text-lg text-dark-dim">Final Score</div>
-              <div id="result-score" className="text-7xl font-bold text-dark-highlight">
+              <div className="text-lg text-dark-dim" title="score = letter per second x accuracy">Final Score</div>
+              <div id="result-score" className="text-7xl font-bold text-dark-highlight" title="score = letter per second x accuracy">
                 <CountUp value={parseFloat(results.score) || 0} decimals={2} />
               </div>
             </div>
@@ -1155,14 +1131,14 @@ export default function Home() {
               {/* Column 1: Core Stats */}
               <div className="flex flex-col space-y-6">
                 <div>
-                  <div className="text-lg text-dark-dim text-left">letter per second</div>
-                  <div id="result-lps" className="text-4xl font-bold text-dark-main text-left">
+                  <div className="text-lg text-dark-dim text-left" title="letter per second">letter per second</div>
+                  <div id="result-lps" className="text-4xl font-bold text-dark-main text-left" title="letter per second">
                     <CountUp value={parseFloat(results.lps) || 0} decimals={2} />
                   </div>
                 </div>
                 <div>
-                  <div className="text-lg text-dark-dim text-left">acc</div>
-                  <div id="result-acc" className="text-4xl font-bold text-dark-main text-left">
+                  <div className="text-lg text-dark-dim text-left" title="accuracy">acc</div>
+                  <div id="result-acc" className="text-4xl font-bold text-dark-main text-left" title="accuracy">
                     <CountUp value={parseFloat(results.accuracy.replace('%', '')) || 0} decimals={1} suffix="%" />
                   </div>
                 </div>
@@ -1578,24 +1554,6 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleShare("facebook")}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-md bg-dark-kbd hover:bg-dark-kbd/80 text-dark-dim hover:text-dark-highlight transition-colors font-mono text-sm lowercase tracking-wider"
-                  title="Share on Facebook"
-                >
-                  <i className="fa-brands fa-facebook h-4 w-4" />
-                  <span>facebook</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleShare("linkedin")}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-md bg-dark-kbd hover:bg-dark-kbd/80 text-dark-dim hover:text-dark-highlight transition-colors font-mono text-sm lowercase tracking-wider"
-                  title="Share on LinkedIn"
-                >
-                  <i className="fa-brands fa-linkedin h-4 w-4" />
-                  <span>linkedin</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => handleShare()}
                   className="flex items-center space-x-2 px-4 py-2 rounded-md bg-dark-kbd hover:bg-dark-kbd/80 text-dark-dim hover:text-dark-highlight transition-colors font-mono text-sm lowercase tracking-wider"
                   title="Share"
@@ -1611,6 +1569,88 @@ export default function Home() {
 
         <Footer />
       </div>
+
+      {/* How to Play Overlay */}
+      <AnimatePresence>
+        {showHowToPlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowHowToPlay(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-lg bg-dark-kbd p-8 shadow-2xl border border-dark-dim/20 mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="pb-5">
+                <h1 className="text-4xl font-bold text-dark-highlight font-nfs text-center">
+                  Proof of Speed
+                </h1>
+
+                <div className="mt-6 text-dark-main font-mono">
+                  <p className="mt-2 text-dark-dim">
+                    Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">&lt;=200 milliseconds</span>.
+                  </p>
+                  <p className="mt-2 text-dark-dim">
+                    We built this game to help you feel that speed. The pacer bar moves at 200ms per letter. Your goal is to beat it.
+                  </p>
+                </div>
+
+                <div className="mt-6 text-dark-main font-mono">
+                  <h2 className="text-xl font-bold">How to Win</h2>
+                  <ol className="list-none space-y-3 mt-3 text-dark-dim">
+                    <li className="flex items-center">
+                      <i className="fa fa-tachometer h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
+                      <span><span className="font-bold text-dark-main">Race the Pacer:</span> Type the full text before the green blocks are completely formed.</span>
+                    </li>
+                    <li className="flex items-center">
+                      <i className="fa fa-trophy h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
+                      <span><span className="font-bold text-dark-main">Get a Rank:</span> Your rank is based on your typing speed and accuracy.</span>
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="mt-6 rounded-lg border border-dark-dim/30 bg-dark-bg/50 p-4 text-sm font-mono">
+                  <div className="text-dark-main">
+                    <div className="mb-1">
+                      <span className="font-bold text-dark-highlight">Blockchain Speed Ranks</span>
+                    </div>
+                    <div className="text-dark-dim">
+                      Your typing speed determines which blockchain you match. Can you beat <a href="https://etherlink.com" target="_blank" rel="noopener noreferrer" className="text-dark-highlight hover:underline">Etherlink</a> Sub-block's 200ms speed?
+                    </div>
+                  </div>
+                  <ul className="list-disc list-inside pl-4 mt-3 space-y-1 text-sm text-dark-dim">
+                    <li><span className="font-bold text-dark-main">Etherlink/Base/Unichain:</span> 150-200ms / letter (Lightning fast!)</li>
+                    <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms / letter (Super fast!)</li>
+                    <li><span className="font-bold text-dark-main">Other ETH Layer 2s:</span> 401-1000ms / letter (Fast!)</li>
+                    <li><span className="font-bold text-dark-main">Polygon:</span> 1001-2000ms / letter (Quick!)</li>
+                    <li><span className="font-bold text-dark-main">Ethereum Mainnet:</span> 2001-12000ms / letter (Standard speed)</li>
+                    <li><span className="font-bold text-dark-main">Bitcoin:</span> &gt; 12000ms / letter (Slow and steady)</li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setShowHowToPlay(false)}
+                    className="rounded-md border border-dark-dim/30 bg-dark-highlight py-2 px-4 text-sm font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer flex items-center justify-center"
+                    style={{ backgroundColor: "#39ff9c" }}
+                  >
+                    <span className="font-mono mr-6">Close</span>
+                    <i className="fa-solid fa-times h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

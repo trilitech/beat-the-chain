@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 
 export default function Footer() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -30,6 +31,13 @@ export default function Footer() {
               <i className="fa-solid fa-circle-question h-4 w-4" />
               <span>how to play</span>
             </button>
+            <Link
+              href="/leaderboard"
+              className="flex items-center space-x-1 text-dark-dim hover:text-dark-highlight transition-colors"
+            >
+              <i className="fa-solid fa-star h-4 w-4" />
+              <span>leaderboard</span>
+            </Link>
             <a
               href="https://discord.gg/etherlink"
               target="_blank"
@@ -123,9 +131,9 @@ export default function Footer() {
                     </div>
                   </div>
                   <ul className="list-disc list-inside pl-4 mt-3 space-y-1 text-sm text-dark-dim">
-                    <li><span className="font-bold text-dark-main">Unichain/Base/Etherlink:</span> 150-200ms / letter (Lightning fast!)</li>
+                    <li><span className="font-bold text-dark-main">Etherlink/Base/Unichain:</span> 150-200ms / letter (Lightning fast!)</li>
                     <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms / letter (Super fast!)</li>
-                    <li><span className="font-bold text-dark-main">ETH Layer2s:</span> 401-1000ms / letter (Fast!)</li>
+                    <li><span className="font-bold text-dark-main">Other ETH Layer 2s:</span> 401-1000ms / letter (Fast!)</li>
                     <li><span className="font-bold text-dark-main">Polygon:</span> 1001-2000ms / letter (Quick!)</li>
                     <li><span className="font-bold text-dark-main">Ethereum Mainnet:</span> 2001-12000ms / letter (Standard speed)</li>
                     <li><span className="font-bold text-dark-main">Bitcoin:</span> &gt; 12000ms / letter (Slow and steady)</li>
