@@ -12,6 +12,24 @@ type GameMode = typeof GAME_MODES[number];
 
 const ITEMS_PER_PAGE = 20;
 
+// Helper function to extract rank name (returns full rank with emoji)
+function getRankName(fullRank: string): string {
+  if (!fullRank) return "";
+  // Handle legacy ranks (Sub-blocks, etc.)
+  if (fullRank === "Etherlink/Base/Unichain" || fullRank === "Unichain/base/etherlink" || fullRank === "Etherlink/base/unichain") {
+    return "Sub-blocks";
+  }
+  // Handle old rank format with colon (for backward compatibility)
+  const colonIndex = fullRank.indexOf(":");
+  if (colonIndex > 0) {
+    // Old format: "Bronze: Block Rookie" -> return just "Bronze" (but we want the new format)
+    // For now, return the full rank as new ranks include emojis directly
+    return fullRank;
+  }
+  // New format: ranks include emojis directly, return as-is
+  return fullRank;
+}
+
 export default function LeaderboardPage() {
   const [gameMode, setGameMode] = useState<GameMode>(15);
   const [leaders, setLeaders] = useState<LeaderboardEntry[]>([]);
@@ -140,7 +158,7 @@ export default function LeaderboardPage() {
                         <div className="text-left">
                           <div className="text-dark-dim">#{startIndex + idx + 1}</div>
                           <div className="text-xs text-dark-highlight">
-                            {leader.rank === "Etherlink/Base/Unichain" || leader.rank === "Unichain/base/etherlink" || leader.rank === "Etherlink/base/unichain" ? "Sub-blocks" : leader.rank}
+                            {getRankName(leader.rank)}
                           </div>
                         </div>
                         <div className="col-span-2 text-left">

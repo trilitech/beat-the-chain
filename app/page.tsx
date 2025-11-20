@@ -21,6 +21,64 @@ const GAME_MODES = [15, 30, 60] as const; // Word counts
 type GameMode = typeof GAME_MODES[number];
 // Removed accuracy threshold - all players get ranks based on speed
 
+// Rank descriptions
+const RANK_DESCRIPTIONS: Record<string, string> = {
+  "Typing Rookie 🥉": "You just spawned in. Still learning WASD and WPM.",
+  "Latency Warrior 🥈": "Better timing, fewer missed blocks. Ping still questionable.",
+  "Speed Operator 🥇": "Clean combos, crisp keystrokes. Starting to look pro.",
+  "Chain Slayer ⚔️": "Outpaces block time like it's a low-level mob. Mechanical skill unlocked.",
+  "Turbo Typelord 💎": "Butterfly-tapping the keyboard. Zero lag. Zero mercy.",
+  "Grandmaster of Speed 👑": "S-tier reflexes. Full APM demon. The final boss of block speed",
+};
+
+// Mapping from old rank names to new emoji versions
+const RANK_NAME_MAP: Record<string, string> = {
+  "Bronze: Block Rookie": "Typing Rookie 🥉",
+  "Silver: Latency Warrior": "Latency Warrior 🥈",
+  "Gold: Speed Operator": "Speed Operator 🥇",
+  "Platinum: Chain Slayer": "Chain Slayer ⚔️",
+  "Diamond: Turbo Typelord": "Turbo Typelord 💎",
+  "Master: Grandmaster Blockbreaker": "Grandmaster of Speed 👑",
+  // Also handle without colons
+  "Bronze": "Typing Rookie 🥉",
+  "Silver": "Latency Warrior 🥈",
+  "Gold": "Speed Operator 🥇",
+  "Platinum": "Chain Slayer ⚔️",
+  "Diamond": "Turbo Typelord 💎",
+  "Master": "Grandmaster of Speed 👑",
+};
+
+// Helper function to get rank name with emoji (handles both old and new formats)
+function getRankName(fullRank: string): string {
+  if (!fullRank) return "";
+  // If it's already in the new format (has emoji), return as-is
+  if (RANK_NAME_MAP[fullRank]) {
+    return RANK_NAME_MAP[fullRank];
+  }
+  // Check if it's already a new format rank (contains emoji)
+  const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(fullRank);
+  if (hasEmoji) {
+    return fullRank;
+  }
+  // Try to map old format
+  return RANK_NAME_MAP[fullRank] || fullRank;
+}
+
+// Helper function to format rank name for dropdown (emoji before text)
+function getRankNameForDropdown(fullRank: string): string {
+  const rankName = getRankName(fullRank);
+  if (!rankName) return "";
+  
+  // Extract emoji and text
+  const emojiMatch = rankName.match(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u);
+  if (emojiMatch) {
+    const emoji = emojiMatch[0];
+    const text = rankName.replace(emoji, '').trim();
+    return `${emoji} ${text}`;
+  }
+  return rankName;
+}
+
 const DEFAULT_RESULTS = {
   score: "0",
   lps: "0",
@@ -364,15 +422,14 @@ export default function Home() {
     
     // Rank is based on score (6 levels)
     // Score already factors in both speed and accuracy: finalScore = lettersPerSecond * (accuracyDecimal ^ 2)
-    // Determine rank (1-6) based on score
-    // Placeholder logic - will be updated with actual thresholds later
-    let rank = "Rank 6";
-    if (finalScore >= 20) rank = "Rank 1";
-    else if (finalScore >= 15) rank = "Rank 2";
-    else if (finalScore >= 10) rank = "Rank 3";
-    else if (finalScore >= 5) rank = "Rank 4";
-    else if (finalScore >= 2) rank = "Rank 5";
-    else rank = "Rank 6";
+    // Determine rank based on score thresholds
+    let rank = "Typing Rookie 🥉";
+    if (finalScore >= 20) rank = "Grandmaster of Speed 👑";
+    else if (finalScore >= 15) rank = "Turbo Typelord 💎";
+    else if (finalScore >= 10) rank = "Chain Slayer ⚔️";
+    else if (finalScore >= 5) rank = "Speed Operator 🥇";
+    else if (finalScore >= 2) rank = "Latency Warrior 🥈";
+    else rank = "Typing Rookie 🥉";
 
     const resultsData = {
       score: finalScore.toFixed(2),
@@ -436,17 +493,18 @@ export default function Home() {
     initGame();
   }, [gameMode, initGame]);
 
-  // Trigger confetti if user is faster than Sub-blocks
+  // Trigger confetti if user has Speed Operator rank or higher
   useEffect(() => {
-    if (testFinished && results.speedComparison === "Sub-blocks") {
-      const msPerLetter = parseFloat(results.msPerLetter) || 0;
-      if (msPerLetter < 200 && confettiRef.current) {
+    if (testFinished && confettiRef.current) {
+      const rankName = getRankName(results.rank);
+      // Trigger for Speed Operator, Chain Slayer, Turbo Typelord, or Grandmaster of Speed
+      if (rankName === "Speed Operator 🥇" || rankName === "Chain Slayer ⚔️" || rankName === "Turbo Typelord 💎" || rankName === "Grandmaster of Speed 👑") {
         setTimeout(() => {
           confettiRef.current?.fire();
         }, 500);
       }
     }
-  }, [testFinished, results.speedComparison, results.msPerLetter]);
+  }, [testFinished, results.rank]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -963,7 +1021,7 @@ export default function Home() {
                                 <div className="border-t border-dark-dim/20 pt-3 mt-3 space-y-2">
                                   <div className="flex items-center justify-between">
                                     <div className="text-xs text-dark-dim">best rank</div>
-                                    <div className="text-sm font-bold text-dark-main">{userProfile.rank}</div>
+                                    <div className="text-sm font-bold text-dark-main">{getRankNameForDropdown(userProfile.rank)}</div>
                           </div>
                                   <div className="flex items-center justify-between">
                                     <div className="text-xs text-dark-dim">best score</div>
@@ -1237,8 +1295,8 @@ export default function Home() {
                   const isFasterThanSubblocks = msPerLetter < 200 && results.speedComparison === "Sub-blocks";
                   
                   return (
-                    <div className="flex items-center justify-center gap-8 flex-wrap">
-                      <div>
+                    <div className="flex items-start justify-center gap-8 flex-wrap">
+                      <div className="flex flex-col">
                         <div className="text-lg text-dark-dim mb-2">
                           {isFasterThanSubblocks ? "You were faster than" : "You were as fast as"}
                         </div>
@@ -1246,13 +1304,18 @@ export default function Home() {
                           {results.speedComparison}
                         </div>
                       </div>
-                      <div>
+                      <div className="flex flex-col">
                         <div className="text-lg text-dark-dim mb-2">
                           Your Rank
                         </div>
-                        <div id="result-rank" className="text-3xl font-bold font-nfs text-dark-highlight">
-                          {results.rank}
+                        <div id="result-rank" className="text-3xl font-bold font-nfs text-dark-highlight mb-2">
+                          {getRankName(results.rank)}
                         </div>
+                        {RANK_DESCRIPTIONS[results.rank] && (
+                          <div className="text-sm text-dark-dim font-mono max-w-md">
+                            {RANK_DESCRIPTIONS[results.rank]}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -1652,7 +1715,7 @@ export default function Home() {
                     Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">&lt;=200 milliseconds</span>.
                   </p>
                   <p className="mt-2 text-dark-dim">
-                    We built this game to help you feel that speed. The pacer bar moves at 200ms per letter. Your goal is to beat it.
+                    We built this game to help you feel that speed. The pacer blocks move at 200ms. Your goal is to beat it.
                   </p>
             </div>
 

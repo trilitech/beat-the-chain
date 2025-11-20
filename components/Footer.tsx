@@ -103,7 +103,7 @@ export default function Footer() {
                     Etherlink's new <span className="font-bold text-dark-main">sub-blocks</span> are so fast, they can lock in transactions in <span className="font-bold text-dark-main">&lt;=200 milliseconds</span>.
                   </p>
                   <p className="mt-2 text-dark-dim">
-                    We built this game to help you feel that speed. The pacer bar moves at 200ms per letter. Your goal is to beat it.
+                    We built this game to help you feel that speed. The pacer blocks move at 200ms. Your goal is to beat it.
                   </p>
                 </div>
 
