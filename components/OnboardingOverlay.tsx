@@ -121,9 +121,15 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
     const trimmedName = name.trim();
     // Remove @ if user included it
     const cleanHandle = trimmedName.startsWith('@') ? trimmedName.slice(1) : trimmedName;
-    // Validate X handle: alphanumeric, underscores, 1-15 characters (Twitter/X limit)
+    // Validate X handle according to X's rules:
+    // - 1-15 characters
+    // - Can include underscores (_) for separation
+    // - Can start/end with underscore or alphanumeric
+    // - Cannot contain hyphens (-), periods (.), special characters
+    // - Cannot be solely numeric
     const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
-    if (cleanHandle && handleRegex.test(cleanHandle)) {
+    const isOnlyNumeric = /^\d+$/.test(cleanHandle);
+    if (cleanHandle && handleRegex.test(cleanHandle) && !isOnlyNumeric) {
       onComplete(cleanHandle);
     }
   };
@@ -251,13 +257,14 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                       const trimmed = name.trim();
                       const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
                       const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
-                      return cleanHandle && handleRegex.test(cleanHandle) ? "#39ff9c" : undefined;
+                      const isOnlyNumeric = /^\d+$/.test(cleanHandle);
+                      return cleanHandle && handleRegex.test(cleanHandle) && !isOnlyNumeric ? "#39ff9c" : undefined;
                     })()
                   }}
                   onFocus={(e) => e.target.style.borderColor = "#39ff9c"}
                   onBlur={(e) => e.target.style.borderColor = ""}
                 />
-                <i className="fa-brands fa-twitter absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-dark-dim" />
+                <i className="fa-brands fa-x-twitter absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-dark-dim" />
               </div>
               
               <motion.div
@@ -271,7 +278,8 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                       const trimmed = name.trim();
                       const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
                       const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
-                      const isValid = cleanHandle && handleRegex.test(cleanHandle);
+                      const isOnlyNumeric = /^\d+$/.test(cleanHandle);
+                      const isValid = cleanHandle && handleRegex.test(cleanHandle) && !isOnlyNumeric;
                       const hasError = trimmed && !isValid;
                       
                       return hasError ? (
@@ -283,7 +291,7 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                           className="text-center text-dark-dim mt-2 text-sm font-mono"
                           style={{ lineHeight: "1.6", paddingBottom: "0.125rem" }}
                         >
-                          Please enter a valid X handle (1-15 characters, letters, numbers, and underscores only)
+                          Enter a valid X handle
                         </motion.p>
                       ) : null;
                     })()}
@@ -312,7 +320,8 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                     const trimmed = name.trim();
                     const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
                     const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
-                    return !trimmed || !handleRegex.test(cleanHandle);
+                    const isOnlyNumeric = /^\d+$/.test(cleanHandle);
+                    return !trimmed || !handleRegex.test(cleanHandle) || isOnlyNumeric;
                   })()}
                   className="rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   style={{ backgroundColor: "#39ff9c" }}
