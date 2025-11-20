@@ -3,6 +3,7 @@
 import { useState, ComponentProps } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Root as ResizableRoot, Content as ResizableContent } from "./ResizablePanel";
+import useMeasure from "react-use-measure";
 
 type OnboardingOverlayProps = {
   onComplete: (name: string) => void;
@@ -101,6 +102,7 @@ function CheckIcon(props: ComponentProps<"svg">) {
 export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
+  const [errorRef, errorBounds] = useMeasure();
 
   const handleNext = () => {
     if (step < 2) {
@@ -117,8 +119,12 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    if (trimmedName && trimmedName.length >= 3) {
-      onComplete(trimmedName);
+    // Remove @ if user included it
+    const cleanHandle = trimmedName.startsWith('@') ? trimmedName.slice(1) : trimmedName;
+    // Validate X handle: alphanumeric, underscores, 1-15 characters (Twitter/X limit)
+    const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+    if (cleanHandle && handleRegex.test(cleanHandle)) {
+      onComplete(cleanHandle);
     }
   };
 
@@ -183,11 +189,11 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                     <span className="font-bold text-dark-highlight">Blockchain Speed Ranks</span>
                   </div>
                   <div className="text-dark-dim">
-                    Your typing speed determines which blockchain you match. Can you beat Unichain's 200ms?
+                    Your typing speed determines which blockchain you match. Can you beat Etherlink Sub-block's 200ms?
                   </div>
                 </div>
                 <ul className="list-disc list-inside pl-4 mt-3 space-y-1 text-sm text-dark-dim">
-                  <li><span className="font-bold text-dark-main">Unichain/Base/Etherlink:</span> 150-200ms / letter (Lightning fast!)</li>
+                  <li><span className="font-bold text-dark-main">Etherlink/Base/Unichain:</span> 150-200ms / letter (Lightning fast!)</li>
                   <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms / letter (Super fast!)</li>
                   <li><span className="font-bold text-dark-main">ETH Layer2s:</span> 401-1000ms / letter (Fast!)</li>
                   <li><span className="font-bold text-dark-main">Polygon:</span> 1001-2000ms / letter (Quick!)</li>
@@ -226,10 +232,10 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                   className="max-w-md w-full"
                 >
               <h1 className="text-3xl font-bold text-dark-highlight font-nfs text-center">
-                What's your name?
+                What's your X handle?
               </h1>
               <p className="text-center text-dark-dim mt-2 font-mono">
-                Enter your name to appear on the leaderboard.
+                Enter your X (Twitter) handle to appear on the leaderboard.
               </p>
 
               <div className="relative mt-6">
@@ -237,31 +243,59 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="adebola.xtz"
+                  placeholder="@adebola.xtz"
                   autoFocus
                   className="w-full rounded-md border-2 border-dark-dim/50 bg-dark-bg p-4 pr-12 text-2xl font-bold text-dark-main font-mono placeholder:font-normal focus:outline-none focus:ring-0 transition-colors"
                   style={{ 
-                    borderColor: name.trim() && name.trim().length >= 3 ? "#39ff9c" : undefined
+                    borderColor: (() => {
+                      const trimmed = name.trim();
+                      const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+                      const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+                      return cleanHandle && handleRegex.test(cleanHandle) ? "#39ff9c" : undefined;
+                    })()
                   }}
                   onFocus={(e) => e.target.style.borderColor = "#39ff9c"}
                   onBlur={(e) => e.target.style.borderColor = ""}
                 />
-                <i className="fa fa-user absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-dark-dim" />
+                <i className="fa-brands fa-twitter absolute right-4 top-1/2 -translate-y-1/2 h-6 w-6 text-dark-dim" />
               </div>
               
-              <AnimatePresence>
-                {name.trim() && name.trim().length < 3 && (
-                  <motion.p
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-center text-dark-dim mt-2 text-sm font-mono"
-                  >
-                    Name must be at least 3 characters
-                  </motion.p>
-                )}
-              </AnimatePresence>
+              <motion.div
+                animate={{ height: errorBounds.height > 0 ? errorBounds.height : 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                style={{ overflow: "hidden" }}
+              >
+                <div ref={errorRef} style={{ paddingBottom: "0.25rem" }}>
+                  <AnimatePresence>
+                    {(() => {
+                      const trimmed = name.trim();
+                      const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+                      const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+                      const isValid = cleanHandle && handleRegex.test(cleanHandle);
+                      const hasError = trimmed && !isValid;
+                      
+                      return hasError ? (
+                        <motion.p
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="text-center text-dark-dim mt-2 text-sm font-mono"
+                          style={{ lineHeight: "1.6", paddingBottom: "0.125rem" }}
+                        >
+                          Please enter a valid X handle (1-15 characters, letters, numbers, and underscores only)
+                        </motion.p>
+                      ) : null;
+                    })()}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+
+              <div className="mt-4">
+                <p className="text-center text-dark-dim text-sm font-mono">
+                  You must share your score to be eligible for a prize.
+                </p>
+              </div>
 
               <div className="mt-6 flex justify-between">
                 <button
@@ -274,7 +308,12 @@ export default function OnboardingOverlay({ onComplete }: OnboardingOverlayProps
                 </button>
                 <button
                   type="submit"
-                  disabled={!name.trim() || name.trim().length < 3}
+                  disabled={(() => {
+                    const trimmed = name.trim();
+                    const cleanHandle = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+                    const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+                    return !trimmed || !handleRegex.test(cleanHandle);
+                  })()}
                   className="rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold text-black font-mono transition-transform hover:scale-[1.02] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   style={{ backgroundColor: "#39ff9c" }}
                 >

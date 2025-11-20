@@ -13,6 +13,8 @@ import CountUp from "../components/CountUp";
 import { Confetti, type ConfettiRef } from "../components/Confetti";
 import Footer from "../components/Footer";
 
+
+
 // --- GAME CONSTANTS ---
 const SUB_BLOCK_SPEED_MS = 200;
 const GAME_MODES = [15, 30, 60] as const; // Word counts
@@ -414,7 +416,8 @@ export default function Home() {
   // Fetch rankings for the current game mode
   const fetchRankings = useCallback(async () => {
     setRankingsLoading(true);
-    const { data, error } = await getLeaderboard(gameMode, 4); // Get top 4 for display
+    // Fetch more entries to find current user's position
+    const { data, error } = await getLeaderboard(gameMode, 100); // Get top 100 to find user position
     if (!error && data) {
       setRankings(data);
     }
@@ -1178,22 +1181,51 @@ export default function Home() {
                   <div className="text-sm text-dark-dim">Loading...</div>
                 ) : rankings.length === 0 ? (
                   <div className="text-sm text-dark-dim">No rankings yet</div>
-                ) : (
-                  rankings.slice(0, 4).map((entry, idx) => {
-                    const isCurrentUser = entry.player_name === playerName;
-                    const textColor = idx === 0 
-                      ? "text-dark-highlight" 
-                      : isCurrentUser 
-                        ? "text-dark-main" 
-                        : "text-dark-dim";
-                    return (
-                      <div key={entry.id} className={`flex justify-between text-xl ${textColor}`} style={{ lineHeight: '1.6', minHeight: '1.75rem', paddingBottom: '0.125rem' }}>
-                        <span className="truncate mr-2" style={{ lineHeight: '1.6', display: 'inline-block' }}>{idx + 1}. {entry.player_name}</span>
-                        <span className="flex-shrink-0" style={{ lineHeight: '1.6' }}>{entry.score.toFixed(2)}</span>
-                      </div>
-                    );
-                  })
-                )}
+                ) : (() => {
+                  // Find current user's position
+                  const userIndex = rankings.findIndex(entry => entry.player_name === playerName);
+                  const userPosition = userIndex >= 0 ? userIndex + 1 : null;
+                  
+                  // Get top 4 entries
+                  const top4 = rankings.slice(0, 4);
+                  
+                  // Check if user is in top 4
+                  const isUserInTop4 = userIndex >= 0 && userIndex < 4;
+                  
+                  // If user is in top 4, show top 4. Otherwise, show top 3 + user
+                  const displayEntries = isUserInTop4
+                    ? top4
+                    : userIndex >= 0
+                      ? [...rankings.slice(0, 3), rankings[userIndex]]
+                      : top4;
+                  
+                  return (
+                    <>
+                      {displayEntries.map((entry, idx) => {
+                        const isCurrentUser = entry.player_name === playerName;
+                        // Calculate actual position
+                        const actualPosition = isCurrentUser && userPosition 
+                          ? userPosition 
+                          : isUserInTop4
+                            ? idx + 1
+                            : idx < 3
+                              ? idx + 1
+                              : userPosition;
+                        const textColor = idx === 0 && !isCurrentUser
+                          ? "text-dark-highlight" 
+                          : isCurrentUser 
+                            ? "text-white" 
+                            : "text-dark-dim";
+                        return (
+                          <div key={entry.id} className={`flex justify-between text-xl ${textColor}`} style={{ lineHeight: '1.6', minHeight: '1.75rem', paddingBottom: '0.125rem' }}>
+                            <span className="truncate mr-2" style={{ lineHeight: '1.6', display: 'inline-block' }}>{actualPosition}. {entry.player_name}</span>
+                            <span className="flex-shrink-0" style={{ lineHeight: '1.6' }}>{entry.score.toFixed(2)}</span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

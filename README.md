@@ -32,7 +32,7 @@ It's like being told "you're next in line" at lightning speed — no bidding, no
 
 Your typing speed determines which blockchain you match:
 
-- **Unichain/Base/Etherlink:** 150-200ms / letter (Lightning fast!)
+- **Etherlink/Base/Unichain:** 150-200ms / letter (Lightning fast!)
 - **Solana:** 201-400ms / letter (Super fast!)
 - **ETH Layer2s:** 401-1000ms / letter (Fast!)
 - **Polygon:** 1001-2000ms / letter (Quick!)
