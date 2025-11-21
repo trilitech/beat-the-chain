@@ -10,7 +10,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Client-side client (uses anon key)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Implicit flow: tokens are extracted from URL hash and persisted to localStorage automatically
+// By default, Supabase uses implicit flow for client-side auth
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true, // Persist session to localStorage (default)
+    autoRefreshToken: true, // Automatically refresh tokens (default)
+    detectSessionInUrl: true, // Automatically detect session from URL hash (implicit flow)
+  },
+});
 
 // Server-side client (uses service role key for writes)
 // This should only be used in API routes or server components

@@ -728,57 +728,44 @@ export default function Home() {
     }
   }, [bannerVisible]);
 
-  // Check for Twitter auth session and OAuth callback
+  // Check for Twitter auth session and OAuth callback (Implicit Flow)
   useEffect(() => {
     const restoreSession = async () => {
       setSessionLoading(true);
       
-      // First, check for OAuth callback code in URL
+      // Check for OAuth errors in URL (query params or hash)
       const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get("code");
-      const error = urlParams.get("error");
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const error = urlParams.get("error") || hashParams.get("error");
+      const errorDescription = urlParams.get("error_description") || hashParams.get("error_description");
 
       if (error) {
-        console.error("OAuth error:", error);
-        window.history.replaceState({}, "", window.location.pathname);
-      } else if (code) {
-        // Handle OAuth callback
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        
-        if (exchangeError) {
-          console.error("Error exchanging code:", exchangeError);
-        } else if (data?.user) {
-          const twitterHandle = data.user.user_metadata?.user_name;
-          if (twitterHandle) {
-            setShowOverlay(false);
-            setTwitterUser(data.user);
-            setIsTwitterAuth(true);
-            setPlayerName(twitterHandle);
-            setStoredPlayerName(twitterHandle);
-            localStorage.setItem("is_twitter_auth", "true");
-            
-            const hasData = await restoreUserDataFromDB(twitterHandle);
-            if (hasData) {
-              const profile = getUserProfile(twitterHandle);
-              if (profile.hasProfile && profile.bestGameMode) {
-                const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
-                if (result.data) {
-                  setUserProfile(result.data);
-                }
-              }
-            }
-            
-            requestAnimationFrame(() => appBodyRef.current?.focus());
-            setSessionLoading(false);
-            window.history.replaceState({}, "", window.location.pathname);
-            return;
-          }
-        }
+        console.error("OAuth error:", error, errorDescription);
+        // Clean up URL - remove both query params and hash
         window.history.replaceState({}, "", window.location.pathname);
       }
 
-      // Check for existing Supabase session
-      const { data: { session } } = await supabase.auth.getSession();
+      // With implicit flow, Supabase automatically extracts tokens from URL fragment
+      // and persists them to localStorage. We just need to wait for the session.
+      // Give Supabase a moment to process the URL fragment if it exists
+      if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
+        // Wait a bit for Supabase to process the tokens
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Clean up URL hash after Supabase has processed it
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+
+      // Check for existing Supabase session (implicit flow tokens are automatically persisted)
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        // Clear Twitter auth if there's an error
+        localStorage.setItem("is_twitter_auth", "false");
+        setIsTwitterAuth(false);
+        setTwitterUser(null);
+      }
+
       const isTwitterAuthStored = localStorage.getItem("is_twitter_auth") === "true";
       
       if (session?.user && isTwitterAuthStored) {
@@ -839,34 +826,43 @@ export default function Home() {
 
     restoreSession();
 
-    // Listen for auth changes
+    // Listen for auth changes (handles implicit flow token extraction)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        const twitterHandle = session.user.user_metadata?.user_name;
-        if (twitterHandle) {
-          setShowOverlay(false);
-          setTwitterUser(session.user);
-          setIsTwitterAuth(true);
-          setPlayerName(twitterHandle);
-          setStoredPlayerName(twitterHandle);
-          localStorage.setItem("is_twitter_auth", "true");
-          
-          const hasData = await restoreUserDataFromDB(twitterHandle);
-          if (hasData) {
-            const profile = getUserProfile(twitterHandle);
-            if (profile.hasProfile && profile.bestGameMode) {
-              const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
-              if (result.data) {
-                setUserProfile(result.data);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // With implicit flow, this event fires when tokens are extracted from URL hash
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session?.user) {
+          const twitterHandle = session.user.user_metadata?.user_name;
+          if (twitterHandle) {
+            setShowOverlay(false);
+            setTwitterUser(session.user);
+            setIsTwitterAuth(true);
+            setPlayerName(twitterHandle);
+            setStoredPlayerName(twitterHandle);
+            localStorage.setItem("is_twitter_auth", "true");
+            
+            const hasData = await restoreUserDataFromDB(twitterHandle);
+            if (hasData) {
+              const profile = getUserProfile(twitterHandle);
+              if (profile.hasProfile && profile.bestGameMode) {
+                const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
+                if (result.data) {
+                  setUserProfile(result.data);
+                }
               }
             }
+            
+            // Clean up URL hash if present (implicit flow tokens)
+            if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+            
+            requestAnimationFrame(() => appBodyRef.current?.focus());
+            setSessionLoading(false);
           }
-          
-          requestAnimationFrame(() => appBodyRef.current?.focus());
         }
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         // Session ended
         const isTwitterAuthStored = localStorage.getItem("is_twitter_auth") === "true";
         if (isTwitterAuthStored) {
@@ -876,6 +872,7 @@ export default function Home() {
           localStorage.setItem("is_twitter_auth", "false");
           // Don't reset playerName here - let user decide what to do
         }
+        setSessionLoading(false);
       }
     });
 
@@ -1093,6 +1090,7 @@ export default function Home() {
         provider: "twitter",
         options: {
           redirectTo: `${window.location.origin}${window.location.pathname}`,
+          skipBrowserRedirect: false, // Allow redirect for implicit flow
         },
       });
       
