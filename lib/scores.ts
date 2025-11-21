@@ -330,6 +330,46 @@ export function setStoredPlayerName(playerName: string): void {
 }
 
 /**
+ * Get stored Twitter user data from localStorage
+ */
+export function getStoredTwitterUser(): { handle: string; avatarUrl?: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem("twitter_user");
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Store Twitter user data in localStorage
+ */
+export function setStoredTwitterUser(handle: string, avatarUrl?: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const userData = { handle, avatarUrl };
+    localStorage.setItem("twitter_user", JSON.stringify(userData));
+    localStorage.setItem("is_twitter_auth", "true");
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+}
+
+/**
+ * Clear stored Twitter user data from localStorage
+ */
+export function clearStoredTwitterUser(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem("twitter_user");
+    localStorage.setItem("is_twitter_auth", "false");
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+}
+
+/**
  * Restore user data from database for a given player name
  * Fetches best scores for all game modes and updates localStorage
  */

@@ -1,6 +1,6 @@
 "use client"; // This is CRITICAL for React Hooks to work in the App Router
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { AnimatePresence, motion, Variants, HTMLMotionProps } from "framer-motion";
 import Link from "next/link";
 import html2canvas from "html2canvas";
@@ -108,6 +108,132 @@ const generateSentence = (wordCount: number) => {
   } catch {
     return FALLBACK_SENTENCES[Math.floor(Math.random() * FALLBACK_SENTENCES.length)];
   }
+};
+
+// Static blockchain configuration - moved outside component to avoid recreation
+const BLOCKCHAIN_THRESHOLDS = [
+  { ms: 600000, position: 0 },   // Bitcoin
+  { ms: 12000, position: 16.67 },    // Ethereum Mainnet
+  { ms: 2000, position: 33.33 },     // Polygon
+  { ms: 1000, position: 50 },     // ETH L2s
+  { ms: 400, position: 66.67 },       // Solana
+  { ms: 200, position: 83.33 },     // Base
+  { ms: 20, position: 100 },     // Super Confirmations
+];
+
+const BG_COLOR = '#323437';
+
+const LOGO_COLORS: Record<string, string[]> = {
+  'btc': ['#F7931A', '#FFFFFF'], // Bitcoin: orange bg, white symbol
+  'eth': ['#627EEA', '#FFFFFF'], // Ethereum: purple bg, white symbol
+  'matic': ['#6F41D8', '#FFFFFF'], // Polygon: purple bg, white symbol
+  'sol': ['#66F9A1', '#FFFFFF'], // Solana: green bg, white symbol
+  'base': ['#0052FF', '#FFFFFF'], // Base: blue bg, white symbol
+  'xtz': ['#A6E000', '#FFFFFF'], // Tezos: lime green bg, white symbol
+};
+
+// Static helper functions - moved outside component
+const getLuminance = (hex: string) => {
+  const rgb = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!rgb) return 0;
+  const r = parseInt(rgb[1], 16) / 255;
+  const g = parseInt(rgb[2], 16) / 255;
+  const b = parseInt(rgb[3], 16) / 255;
+  const [rs, gs, bs] = [r, g, b].map(c => 
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  );
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+};
+
+const getContrast = (color1: string, color2: string) => {
+  const lum1 = getLuminance(color1);
+  const lum2 = getLuminance(color2);
+  const lighter = Math.max(lum1, lum2);
+  const darker = Math.min(lum1, lum2);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+const getBestContrastColor = (iconKey: string | null, defaultColor: string) => {
+  if (!iconKey || !LOGO_COLORS[iconKey]) return defaultColor;
+  const colors = LOGO_COLORS[iconKey];
+  const contrasts = colors.map(color => getContrast(color, BG_COLOR));
+  const maxContrastIndex = contrasts.indexOf(Math.max(...contrasts));
+  return colors[maxContrastIndex];
+};
+
+const lightenColor = (hex: string, percent: number) => {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = ((num >> 16) & 0xff);
+  const g = ((num >> 8) & 0xff);
+  const b = (num & 0xff);
+  const newR = Math.min(255, Math.round(r + (255 - r) * percent));
+  const newG = Math.min(255, Math.round(g + (255 - g) * percent));
+  const newB = Math.min(255, Math.round(b + (255 - b) * percent));
+  return `#${[newR, newG, newB].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+};
+
+// Static chains configuration
+const CHAINS = [
+  { name: 'Bitcoin', ms: 600000, color: getBestContrastColor('btc', '#ff8c00'), icon: 'btc', displayTime: '10mins', gradientColor: '#F7931A' },
+  { name: 'Ethereum', ms: 12000, color: getBestContrastColor('eth', '#ffd700'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' },
+  { name: 'Polygon', ms: 2000, color: getBestContrastColor('matic', '#7B3FE4'), icon: 'matic', displayTime: null, gradientColor: '#6F41D8' },
+  { name: 'ETH L2s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' },
+  { name: 'Solana', ms: 400, color: getBestContrastColor('sol', '#DC1FFF'), icon: 'sol', displayTime: null, gradientColor: '#66F9A1' },
+  { name: 'Base', ms: 200, color: getBestContrastColor('base', '#0052FF'), icon: 'base', displayTime: null, gradientColor: '#0052FF' },
+  { name: 'Super Conf.', ms: 20, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' },
+];
+
+const CHAIN_POSITIONS = CHAINS.map((chain, index) => ({
+  ...chain,
+  position: (index / (CHAINS.length - 1)) * 100
+}));
+
+const CHART_START_OFFSET = 2.5;
+const CHART_END_OFFSET = 5;
+const CHART_WIDTH = 100 - CHART_START_OFFSET - CHART_END_OFFSET;
+
+const getGradientPosition = (blockchainPosition: number) => {
+  return CHART_START_OFFSET + (blockchainPosition / 100) * CHART_WIDTH;
+};
+
+const GRADIENT_STOPS = CHAINS.map((chain, index) => {
+  const blockchainPosition = (index / (CHAINS.length - 1)) * 100;
+  const actualPosition = getGradientPosition(blockchainPosition);
+  return `${chain.gradientColor} ${actualPosition}%`;
+}).join(', ');
+
+const GRADIENT_STRING = `${CHAINS[0].gradientColor} 0%, ${GRADIENT_STOPS}, ${CHAINS[CHAINS.length - 1].gradientColor} 100%`;
+
+const BRIGHTER_GRADIENT_STOPS = CHAINS.map((chain, index) => {
+  const blockchainPosition = (index / (CHAINS.length - 1)) * 100;
+  const actualPosition = getGradientPosition(blockchainPosition);
+  const lighterColor = lightenColor(chain.gradientColor, 0.2);
+  return `${lighterColor} ${actualPosition}%`;
+}).join(', ');
+
+const BRIGHTER_GRADIENT_STRING = `${lightenColor(CHAINS[0].gradientColor, 0.2)} 0%, ${BRIGHTER_GRADIENT_STOPS}, ${lightenColor(CHAINS[CHAINS.length - 1].gradientColor, 0.2)} 100%`;
+
+// Function to calculate position based on ms - only this depends on user input
+const getSpeedPosition = (ms: number): number => {
+  const clampedMs = Math.max(20, Math.min(600000, ms));
+  
+  for (let i = 0; i < BLOCKCHAIN_THRESHOLDS.length - 1; i++) {
+    const lower = BLOCKCHAIN_THRESHOLDS[i + 1];
+    const upper = BLOCKCHAIN_THRESHOLDS[i];
+    
+    if (clampedMs >= lower.ms && clampedMs <= upper.ms) {
+      const logLower = Math.log10(lower.ms);
+      const logUpper = Math.log10(upper.ms);
+      const logValue = Math.log10(clampedMs);
+      const segmentNormalized = (logValue - logLower) / (logUpper - logLower);
+      const positionRange = upper.position - lower.position;
+      return lower.position + (segmentNormalized * positionRange);
+    }
+  }
+  
+  if (clampedMs <= 20) return 100;
+  if (clampedMs >= 600000) return 0;
+  return 0;
 };
 
 // Define types for React state and refs
@@ -273,18 +399,21 @@ export default function Home() {
   const [textFocused, setTextFocused] = useState(false);
 
   // NEW: State for overlay and player name
-  const [showOverlay, setShowOverlay] = useState(false); // Will be set based on localStorage check
+  // Initialize to safe defaults to avoid hydration mismatches
+  // Will be updated in useEffect after client-side hydration
   const [playerName, setPlayerName] = useState("you");
+  const [showOverlay, setShowOverlay] = useState(true); // Default to showing overlay, will be updated after check
   const [rankings, setRankings] = useState<LeaderboardEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const hasLoadedInitialRankings = useRef(false);
   const [userProfile, setUserProfile] = useState<LeaderboardEntry | null>(null);
   const [allUserScores, setAllUserScores] = useState<LeaderboardEntry[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
   // Twitter auth state
-  const [twitterUser, setTwitterUser] = useState<User | null>(null);
   const [isTwitterAuth, setIsTwitterAuth] = useState(false);
-  const [sessionLoading, setSessionLoading] = useState(true); // Track if session is being restored
+  const [twitterUser, setTwitterUser] = useState<User | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(false); // Start as false since we restore sync
   const [hoveredMode, setHoveredMode] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -480,17 +609,36 @@ export default function Home() {
   // Fetch rankings for the current game mode
   const fetchRankings = useCallback(async () => {
     setRankingsLoading(true);
-    // Fetch more entries to find current user's position
-    const { data, error } = await getLeaderboard(gameMode, 100); // Get top 100 to find user position
-    if (!error && data) {
-      setRankings(data);
+    try {
+      // Fetch more entries to find current user's position
+      const { data, error } = await getLeaderboard(gameMode, 100); // Get top 100 to find user position
+      if (error) {
+        console.error("Error fetching leaderboard:", error);
+        setRankings([]);
+      } else if (data) {
+        setRankings(data);
+      } else {
+        setRankings([]);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching leaderboard:", err);
+      setRankings([]);
+    } finally {
+      setRankingsLoading(false);
     }
-    setRankingsLoading(false);
   }, [gameMode]);
+
+  // Load leaderboard on initial mount (only once)
+  useEffect(() => {
+    if (!hasLoadedInitialRankings.current) {
+      hasLoadedInitialRankings.current = true;
+      fetchRankings();
+    }
+  }, [fetchRankings]);
 
   // Fetch rankings when game mode changes or when test finishes
   useEffect(() => {
-    if (testFinished) {
+    if (testFinished && hasLoadedInitialRankings.current) {
       fetchRankings();
     }
   }, [testFinished, fetchRankings]);
@@ -728,12 +876,10 @@ export default function Home() {
     }
   }, [bannerVisible]);
 
-  // Check for Twitter auth session and OAuth callback (Implicit Flow)
+  // Check for existing session on mount and restore state
   useEffect(() => {
-    const restoreSession = async () => {
-      setSessionLoading(true);
-      
-      // Check for OAuth errors in URL (query params or hash)
+    const checkSession = async () => {
+      // Check for OAuth errors in URL
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const error = urlParams.get("error") || hashParams.get("error");
@@ -741,35 +887,21 @@ export default function Home() {
 
       if (error) {
         console.error("OAuth error:", error, errorDescription);
-        // Clean up URL - remove both query params and hash
         window.history.replaceState({}, "", window.location.pathname);
       }
 
-      // With implicit flow, Supabase automatically extracts tokens from URL fragment
-      // and persists them to localStorage. We just need to wait for the session.
-      // Give Supabase a moment to process the URL fragment if it exists
+      // Clean up URL hash if present (Supabase handles token extraction automatically)
       if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
-        // Wait a bit for Supabase to process the tokens
         await new Promise(resolve => setTimeout(resolve, 100));
-        // Clean up URL hash after Supabase has processed it
         window.history.replaceState({}, "", window.location.pathname);
       }
 
-      // Check for existing Supabase session (implicit flow tokens are automatically persisted)
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Error getting session:", sessionError);
-        // Clear Twitter auth if there's an error
-        localStorage.setItem("is_twitter_auth", "false");
-        setIsTwitterAuth(false);
-        setTwitterUser(null);
-      }
+      // Check for existing session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      const isTwitterAuthStored = localStorage.getItem("is_twitter_auth") === "true";
-      
-      if (session?.user && isTwitterAuthStored) {
-        // Restore Twitter session
+      if (session?.user) {
         const twitterHandle = session.user.user_metadata?.user_name;
         if (twitterHandle) {
           setTwitterUser(session.user);
@@ -777,6 +909,59 @@ export default function Home() {
           setPlayerName(twitterHandle);
           setStoredPlayerName(twitterHandle);
           setShowOverlay(false);
+
+          // Restore user data from database
+          const hasData = await restoreUserDataFromDB(twitterHandle);
+          if (hasData) {
+            const profile = getUserProfile(twitterHandle);
+            if (profile.hasProfile && profile.bestGameMode) {
+              const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
+              if (result.data) {
+                setUserProfile(result.data);
+              }
+            }
+          }
+          return;
+        }
+      }
+
+      // Restore name-based user state (if not Twitter auth)
+      const storedName = getStoredPlayerName();
+      if (storedName && storedName !== "you") {
+        setPlayerName(storedName);
+        setShowOverlay(false);
+        
+        const hasData = await restoreUserDataFromDB(storedName);
+        if (hasData) {
+          const profile = getUserProfile(storedName);
+          if (profile.hasProfile && profile.bestGameMode) {
+            const result = await getUserBestScore(storedName, profile.bestGameMode);
+            if (result.data) {
+              setUserProfile(result.data);
+            }
+          }
+        }
+      } else if (!session?.user) {
+        // No session and no stored name - show overlay
+        setShowOverlay(true);
+      }
+    };
+
+    checkSession();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const twitterHandle = session.user.user_metadata?.user_name;
+        
+        if (twitterHandle) {
+          setShowOverlay(false);
+          setTwitterUser(session.user);
+          setIsTwitterAuth(true);
+          setPlayerName(twitterHandle);
+          setStoredPlayerName(twitterHandle);
           
           const hasData = await restoreUserDataFromDB(twitterHandle);
           if (hasData) {
@@ -789,109 +974,25 @@ export default function Home() {
             }
           }
           
-          setSessionLoading(false);
-          return;
-        }
-      } else if (!session?.user && isTwitterAuthStored) {
-        // Session expired or invalid, clear Twitter auth
-        localStorage.setItem("is_twitter_auth", "false");
-        setIsTwitterAuth(false);
-        setTwitterUser(null);
-      }
-
-      // Check for name-based user (non-Twitter)
-      if (!isTwitterAuthStored) {
-        const storedName = getStoredPlayerName();
-        if (storedName && storedName !== "you") {
-          setPlayerName(storedName);
-          setIsTwitterAuth(false);
-          setTwitterUser(null);
+          // Clean up URL hash if present (implicit flow tokens)
+          if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
+            window.history.replaceState({}, "", window.location.pathname);
+          }
           
-          const hasData = await restoreUserDataFromDB(storedName);
-          if (hasData) {
-            const profile = getUserProfile(storedName);
-            if (profile.hasProfile && profile.bestGameMode) {
-              const result = await getUserBestScore(storedName, profile.bestGameMode);
-              if (result.data) {
-                setUserProfile(result.data);
-              }
-            }
-          }
-          setShowOverlay(false);
+          requestAnimationFrame(() => appBodyRef.current?.focus());
         }
-      }
-
-      setSessionLoading(false);
-    };
-
-    restoreSession();
-
-    // Listen for auth changes (handles implicit flow token extraction)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // With implicit flow, this event fires when tokens are extracted from URL hash
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        if (session?.user) {
-          const twitterHandle = session.user.user_metadata?.user_name;
-          if (twitterHandle) {
-            setShowOverlay(false);
-            setTwitterUser(session.user);
-            setIsTwitterAuth(true);
-            setPlayerName(twitterHandle);
-            setStoredPlayerName(twitterHandle);
-            localStorage.setItem("is_twitter_auth", "true");
-            
-            const hasData = await restoreUserDataFromDB(twitterHandle);
-            if (hasData) {
-              const profile = getUserProfile(twitterHandle);
-              if (profile.hasProfile && profile.bestGameMode) {
-                const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
-                if (result.data) {
-                  setUserProfile(result.data);
-                }
-              }
-            }
-            
-            // Clean up URL hash if present (implicit flow tokens)
-            if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
-              window.history.replaceState({}, "", window.location.pathname);
-            }
-            
-            requestAnimationFrame(() => appBodyRef.current?.focus());
-            setSessionLoading(false);
-          }
-        }
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         // Session ended
-        const isTwitterAuthStored = localStorage.getItem("is_twitter_auth") === "true";
-        if (isTwitterAuthStored) {
-          // User was signed in with Twitter but session expired
-          setTwitterUser(null);
-          setIsTwitterAuth(false);
-          localStorage.setItem("is_twitter_auth", "false");
-          // Don't reset playerName here - let user decide what to do
-        }
-        setSessionLoading(false);
+        setTwitterUser(null);
+        setIsTwitterAuth(false);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // This useEffect is now handled in the session restoration above
-  // Keeping this for overlay initialization only
-  useEffect(() => {
-    // Only show overlay if no session is being restored and no stored name
-    if (!sessionLoading) {
-      const storedName = getStoredPlayerName();
-      const isTwitterAuth = localStorage.getItem("is_twitter_auth") === "true";
-      
-      if (!storedName && !isTwitterAuth && playerName === "you") {
-        setShowOverlay(true);
-      }
-    }
-  }, [sessionLoading, playerName]);
+  // Overlay is already set synchronously in useState initializer above
+  // No need for this useEffect
 
   const handleRestart = useCallback(() => {
     initGame();
@@ -1028,7 +1129,6 @@ export default function Home() {
     
     // Mark as NOT Twitter auth when using name
     setIsTwitterAuth(false);
-    localStorage.setItem("is_twitter_auth", "false");
     setTwitterUser(null);
     
     // Check if user exists in database and restore their data
@@ -1064,7 +1164,6 @@ export default function Home() {
           setIsTwitterAuth(true);
           setPlayerName(twitterHandle);
           setStoredPlayerName(twitterHandle);
-          localStorage.setItem("is_twitter_auth", "true");
           
           // Restore user data from database if available
           const hasData = await restoreUserDataFromDB(twitterHandle);
@@ -1112,7 +1211,6 @@ export default function Home() {
     await supabase.auth.signOut();
     setTwitterUser(null);
     setIsTwitterAuth(false);
-    localStorage.setItem("is_twitter_auth", "false");
     
     setPlayerName("you");
     setUserProfile(null);
@@ -1164,29 +1262,43 @@ export default function Home() {
                 </button>
                 <div className="relative">
               <button
-                onClick={() => {
+                onClick={async () => {
                       // Toggle user profile menu
                   if (playerName && playerName !== "you") {
-                        // Fetch all scores for all game modes
-                        getAllUserScores(playerName).then((result) => {
-                          if (result.data && result.data.length > 0) {
-                            setAllUserScores(result.data);
-                            // Set the best score as the primary profile (for backward compatibility)
-                            const bestScore = result.data.reduce((best, current) => 
-                              current.score > best.score ? current : best
-                            );
-                            setUserProfile(bestScore);
-                        } else {
+                        // Always toggle the menu first for immediate feedback
+                        const newMenuState = !showUserMenu;
+                        setShowUserMenu(newMenuState);
+                        
+                        // Only fetch scores if we're opening the menu
+                        if (newMenuState) {
+                          try {
+                            // Fetch all scores for all game modes
+                            const result = await getAllUserScores(playerName);
+                            console.log("getAllUserScores result:", result); // Debug log
+                            
+                            if (result.data && result.data.length > 0) {
+                              setAllUserScores(result.data);
+                              // Set the best score as the primary profile (for backward compatibility)
+                              const bestScore = result.data.reduce((best, current) => 
+                                current.score > best.score ? current : best
+                              );
+                              setUserProfile(bestScore);
+                            } else {
+                              console.log("No scores found for player:", playerName); // Debug log
+                              setAllUserScores([]);
+                              setUserProfile(null);
+                            }
+                          } catch (error) {
+                            console.error("Error fetching user scores:", error);
                             setAllUserScores([]);
-                          setUserProfile(null);
+                            setUserProfile(null);
+                          }
                         }
-                        setShowUserMenu(!showUserMenu);
-                      });
                     } else {
                         // Still toggle the dropdown even if no player name
                         setAllUserScores([]);
-                      setUserProfile(null);
-                      setShowUserMenu(!showUserMenu);
+                        setUserProfile(null);
+                        setShowUserMenu(!showUserMenu);
                   }
                 }}
                     className="text-dark-dim hover:text-dark-highlight transition-colors cursor-pointer text-left"
@@ -1554,166 +1666,10 @@ export default function Home() {
               {/* Rank Progress Bar */}
               {(() => {
                 // Calculate triangle position based on user's actual msPerLetter value
-                // This allows the triangle to slide to the exact position on the scale
-                // while the rank is still determined by the defined ranges
+                // Only compute the position - everything else is static
                 const userMsPerLetter = parseFloat(results.msPerLetter) || 0;
-                
-                // Define the blockchain thresholds and their positions
-                const blockchainThresholds = [
-                  { ms: 600000, position: 0 },   // Bitcoin
-                  { ms: 12000, position: 16.67 },    // Ethereum Mainnet
-                  { ms: 2000, position: 33.33 },     // Polygon
-                  { ms: 1000, position: 50 },     // ETH L2s
-                  { ms: 400, position: 66.67 },       // Solana
-                  { ms: 200, position: 83.33 },     // Base
-                  { ms: 20, position: 100 },     // Super Confirmations
-                ];
-                
-                // Function to calculate position using logarithmic interpolation between thresholds
-                // This ensures the triangle position accurately reflects the user's actual time
-                const getPosition = (ms: number): number => {
-                  // Clamp the value to the range
-                  const clampedMs = Math.max(20, Math.min(600000, ms));
-                  
-                  // Find which two thresholds the value falls between
-                  for (let i = 0; i < blockchainThresholds.length - 1; i++) {
-                    const lower = blockchainThresholds[i + 1]; // Lower ms value (faster)
-                    const upper = blockchainThresholds[i];     // Higher ms value (slower)
-                    
-                    if (clampedMs >= lower.ms && clampedMs <= upper.ms) {
-                      // Use logarithmic interpolation within this range
-                      const logLower = Math.log10(lower.ms);
-                      const logUpper = Math.log10(upper.ms);
-                      const logValue = Math.log10(clampedMs);
-                      
-                      // Normalize within this segment
-                      const segmentNormalized = (logValue - logLower) / (logUpper - logLower);
-                      
-                      // Interpolate position between the two markers
-                      const positionRange = upper.position - lower.position;
-                      return lower.position + (segmentNormalized * positionRange);
-                    }
-                  }
-                  
-                  // Handle edge cases
-                  if (clampedMs <= 20) return 100; // Super Confirmations or faster
-                  if (clampedMs >= 600000) return 0; // Bitcoin or slower
-                  
-                  return 0;
-                };
-                
-                // Calculate the position based on actual msPerLetter
-                const speedValue = getPosition(userMsPerLetter);
-                
-                // Clamp between 0 and 100
+                const speedValue = getSpeedPosition(userMsPerLetter);
                 const clampedSpeedValue = Math.max(0, Math.min(100, speedValue));
-                
-                // Helper function to calculate relative luminance
-                const getLuminance = (hex: string) => {
-                  const rgb = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-                  if (!rgb) return 0;
-                  const r = parseInt(rgb[1], 16) / 255;
-                  const g = parseInt(rgb[2], 16) / 255;
-                  const b = parseInt(rgb[3], 16) / 255;
-                  const [rs, gs, bs] = [r, g, b].map(c => 
-                    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-                  );
-                  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-                };
-
-                // Helper function to calculate contrast ratio
-                const getContrast = (color1: string, color2: string) => {
-                  const lum1 = getLuminance(color1);
-                  const lum2 = getLuminance(color2);
-                  const lighter = Math.max(lum1, lum2);
-                  const darker = Math.min(lum1, lum2);
-                  return (lighter + 0.05) / (darker + 0.05);
-                };
-
-                // Background color (dark)
-                const bgColor = '#323437';
-
-                // Colors from logos: [background color, white/light color]
-                const logoColors: Record<string, string[]> = {
-                  'btc': ['#F7931A', '#FFFFFF'], // Bitcoin: orange bg, white symbol
-                  'eth': ['#627EEA', '#FFFFFF'], // Ethereum: purple bg, white symbol
-                  'matic': ['#6F41D8', '#FFFFFF'], // Polygon: purple bg, white symbol
-                  'sol': ['#66F9A1', '#FFFFFF'], // Solana: green bg, white symbol
-                  'base': ['#0052FF', '#FFFFFF'], // Base: blue bg, white symbol
-                  'xtz': ['#A6E000', '#FFFFFF'], // Tezos: lime green bg, white symbol
-                };
-
-                // Function to get best contrast color from logo
-                const getBestContrastColor = (iconKey: string | null, defaultColor: string) => {
-                  if (!iconKey || !logoColors[iconKey]) return defaultColor;
-                  const colors = logoColors[iconKey];
-                  const contrasts = colors.map(color => getContrast(color, bgColor));
-                  const maxContrastIndex = contrasts.indexOf(Math.max(...contrasts));
-                  return colors[maxContrastIndex];
-                };
-
-                // Define blockchain positions with equal spacing
-                // Bitcoin at beginning (left), Super Confirmations at end (right)
-                // Extract colors from logo icons (background colors from SVGs)
-                const chains = [
-                  { name: 'Bitcoin', ms: 600000, color: getBestContrastColor('btc', '#ff8c00'), icon: 'btc', displayTime: '10mins', gradientColor: '#F7931A' }, // Bitcoin orange from logo
-                  { name: 'Ethereum', ms: 12000, color: getBestContrastColor('eth', '#ffd700'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' }, // Ethereum purple from logo
-                  { name: 'Polygon', ms: 2000, color: getBestContrastColor('matic', '#7B3FE4'), icon: 'matic', displayTime: null, gradientColor: '#6F41D8' }, // Polygon purple from logo
-                  { name: 'ETH L2s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' }, // Ethereum purple
-                  { name: 'Solana', ms: 400, color: getBestContrastColor('sol', '#DC1FFF'), icon: 'sol', displayTime: null, gradientColor: '#66F9A1' }, // Solana green from logo
-                  { name: 'Base', ms: 200, color: getBestContrastColor('base', '#0052FF'), icon: 'base', displayTime: null, gradientColor: '#0052FF' }, // Base blue from logo
-                  { name: 'Super Conf.', ms: 20, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' }, // Etherlink logo
-                ];
-                
-                // Equal spacing: 0%, 16.67%, 33.33%, 50%, 66.67%, 83.33%, 100% (7 chains)
-                const blockchainPositions = chains.map((chain, index) => ({
-                  ...chain,
-                  position: (index / (chains.length - 1)) * 100
-                }));
-                
-                // Calculate chart start and end positions based on label positions
-                // Chart should start from Bitcoin icon (left edge of first label)
-                // and end at the right edge of Super Confirmations text (last label)
-                const chartStartOffset = 2.5; // Offset to align with Bitcoin icon
-                const chartEndOffset = 5; // Offset to extend past Super Confirmations text
-                const chartWidth = 100 - chartStartOffset - chartEndOffset;
-                
-                // Build smooth gradient from chain icon colors
-                // Gradient extends full width, but colors align with marker positions
-                // Map blockchain positions (0%, 20%, 40%, 60%, 80%, 100%) to actual positions on full-width gradient
-                const getGradientPosition = (blockchainPosition: number) => {
-                  // Convert blockchain position (0-100%) to actual position on full-width chart
-                  return chartStartOffset + (blockchainPosition / 100) * chartWidth;
-                };
-                
-                const gradientStops = chains.map((chain, index) => {
-                  const blockchainPosition = (index / (chains.length - 1)) * 100;
-                  const actualPosition = getGradientPosition(blockchainPosition);
-                  return `${chain.gradientColor} ${actualPosition}%`;
-                }).join(', ');
-                // Add edge colors to fill the tips
-                const gradientString = `${chains[0].gradientColor} 0%, ${gradientStops}, ${chains[chains.length - 1].gradientColor} 100%`;
-                
-                // Helper to lighten a hex color
-                const lightenColor = (hex: string, percent: number) => {
-                  const num = parseInt(hex.replace('#', ''), 16);
-                  const r = ((num >> 16) & 0xff);
-                  const g = ((num >> 8) & 0xff);
-                  const b = (num & 0xff);
-                  const newR = Math.min(255, Math.round(r + (255 - r) * percent));
-                  const newG = Math.min(255, Math.round(g + (255 - g) * percent));
-                  const newB = Math.min(255, Math.round(b + (255 - b) * percent));
-                  return `#${[newR, newG, newB].map(x => x.toString(16).padStart(2, '0')).join('')}`;
-                };
-                
-                // Brighter version for animation (20% lighter)
-                const brighterGradientStops = chains.map((chain, index) => {
-                  const blockchainPosition = (index / (chains.length - 1)) * 100;
-                  const actualPosition = getGradientPosition(blockchainPosition);
-                  const lighterColor = lightenColor(chain.gradientColor, 0.2);
-                  return `${lighterColor} ${actualPosition}%`;
-                }).join(', ');
-                const brighterGradientString = `${lightenColor(chains[0].gradientColor, 0.2)} 0%, ${brighterGradientStops}, ${lightenColor(chains[chains.length - 1].gradientColor, 0.2)} 100%`;
                 
                 return (
                   <div className="w-full max-w-6xl mx-auto px-4">
@@ -1725,9 +1681,9 @@ export default function Home() {
                           className="h-1 rounded-sm w-full"
                           animate={{
                             background: [
-                              `linear-gradient(to right, ${gradientString})`,
-                              `linear-gradient(to right, ${brighterGradientString})`,
-                              `linear-gradient(to right, ${gradientString})`,
+                              `linear-gradient(to right, ${GRADIENT_STRING})`,
+                              `linear-gradient(to right, ${BRIGHTER_GRADIENT_STRING})`,
+                              `linear-gradient(to right, ${GRADIENT_STRING})`,
                             ]
                           }}
                           transition={{
@@ -1736,7 +1692,7 @@ export default function Home() {
                             ease: "easeInOut"
                           }}
                           style={{
-                            background: `linear-gradient(to right, ${gradientString})`
+                            background: `linear-gradient(to right, ${GRADIENT_STRING})`
                           }}
                         />
                         {/* Animated Shimmer Overlay */}
@@ -1758,9 +1714,9 @@ export default function Home() {
                 </div>
                       
                       {/* Vertical Marker Lines for Each Blockchain - Adjusted for chart width */}
-                      {blockchainPositions.map((blockchain) => {
+                      {CHAIN_POSITIONS.map((blockchain) => {
                         // Adjust position to account for chart padding
-                        const adjustedPosition = chartStartOffset + (blockchain.position / 100) * chartWidth;
+                        const adjustedPosition = CHART_START_OFFSET + (blockchain.position / 100) * CHART_WIDTH;
                         return (
                           <div
                             key={blockchain.name}
@@ -1860,10 +1816,10 @@ export default function Home() {
                       {/* User Position Indicator - Triangle only - Sliding animation */}
                       {clampedSpeedValue >= 0 && clampedSpeedValue <= 100 && (() => {
                         // Adjust user position to account for chart padding
-                        const adjustedUserPosition = chartStartOffset + (clampedSpeedValue / 100) * chartWidth;
+                        const adjustedUserPosition = CHART_START_OFFSET + (clampedSpeedValue / 100) * CHART_WIDTH;
                         return (
                           <motion.div
-                            initial={{ opacity: 0, scale: 0.8, left: `${chartStartOffset}%` }}
+                            initial={{ opacity: 0, scale: 0.8, left: `${CHART_START_OFFSET}%` }}
                             animate={{ 
                               opacity: 1, 
                               scale: 1,

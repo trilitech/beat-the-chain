@@ -33,8 +33,9 @@ export function getSupabaseServerClient() {
   
   return createClient(supabaseUrl, serviceRoleKey, {
     auth: {
-      autoRefreshToken: false,
-      persistSession: false,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
     },
   });
 }
