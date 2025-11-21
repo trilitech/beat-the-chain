@@ -907,6 +907,8 @@ export default function Home() {
           error: sessionError,
         } = await supabase.auth.getSession();
 
+        console.log("Session data:", { session, sessionError });
+
         if (sessionError) {
           console.error("Error getting session:", sessionError);
         }
