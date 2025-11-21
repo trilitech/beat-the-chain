@@ -409,11 +409,13 @@ export default function Home() {
   const hasLoadedInitialRankings = useRef(false);
   const [userProfile, setUserProfile] = useState<LeaderboardEntry | null>(null);
   const [allUserScores, setAllUserScores] = useState<LeaderboardEntry[]>([]);
+  const [scoresLoading, setScoresLoading] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   // Twitter auth state
   const [isTwitterAuth, setIsTwitterAuth] = useState(false);
   const [twitterUser, setTwitterUser] = useState<User | null>(null);
-  const [sessionLoading, setSessionLoading] = useState(false); // Start as false since we restore sync
+  const [sessionLoading, setSessionLoading] = useState(true); // Start as true to wait for session check
+  const [sessionChecked, setSessionChecked] = useState(false); // Track if session check is complete
   const [hoveredMode, setHoveredMode] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -879,71 +881,98 @@ export default function Home() {
   // Check for existing session on mount and restore state
   useEffect(() => {
     const checkSession = async () => {
-      // Check for OAuth errors in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const error = urlParams.get("error") || hashParams.get("error");
-      const errorDescription = urlParams.get("error_description") || hashParams.get("error_description");
+      setSessionLoading(true);
+      
+      try {
+        // Check for OAuth errors in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const error = urlParams.get("error") || hashParams.get("error");
+        const errorDescription = urlParams.get("error_description") || hashParams.get("error_description");
 
-      if (error) {
-        console.error("OAuth error:", error, errorDescription);
-        window.history.replaceState({}, "", window.location.pathname);
-      }
+        if (error) {
+          console.error("OAuth error:", error, errorDescription);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
 
-      // Clean up URL hash if present (Supabase handles token extraction automatically)
-      if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        window.history.replaceState({}, "", window.location.pathname);
-      }
+        // Clean up URL hash if present (Supabase handles token extraction automatically)
+        if (window.location.hash.includes("access_token") || window.location.hash.includes("refresh_token")) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          window.history.replaceState({}, "", window.location.pathname);
+        }
 
-      // Check for existing session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        // Check for existing session - wait for it to be fully ready
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        const twitterHandle = session.user.user_metadata?.user_name;
-        if (twitterHandle) {
-          setTwitterUser(session.user);
-          setIsTwitterAuth(true);
-          setPlayerName(twitterHandle);
-          setStoredPlayerName(twitterHandle);
+        if (sessionError) {
+          console.error("Error getting session:", sessionError);
+        }
+
+        if (session?.user) {
+          const twitterHandle = session.user.user_metadata?.user_name;
+          if (twitterHandle) {
+            setTwitterUser(session.user);
+            setIsTwitterAuth(true);
+            setPlayerName(twitterHandle);
+            setStoredPlayerName(twitterHandle);
+            setShowOverlay(false);
+
+            // Restore user data from database
+            try {
+              const hasData = await restoreUserDataFromDB(twitterHandle);
+              if (hasData) {
+                const profile = getUserProfile(twitterHandle);
+                if (profile.hasProfile && profile.bestGameMode) {
+                  const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
+                  if (result.data) {
+                    setUserProfile(result.data);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error("Error restoring user data:", error);
+            }
+            
+            setSessionChecked(true);
+            setSessionLoading(false);
+            return;
+          }
+        }
+
+        // Restore name-based user state (if not Twitter auth)
+        const storedName = getStoredPlayerName();
+        if (storedName && storedName !== "you") {
+          setPlayerName(storedName);
           setShowOverlay(false);
-
-          // Restore user data from database
-          const hasData = await restoreUserDataFromDB(twitterHandle);
-          if (hasData) {
-            const profile = getUserProfile(twitterHandle);
-            if (profile.hasProfile && profile.bestGameMode) {
-              const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
-              if (result.data) {
-                setUserProfile(result.data);
+          
+          try {
+            const hasData = await restoreUserDataFromDB(storedName);
+            if (hasData) {
+              const profile = getUserProfile(storedName);
+              if (profile.hasProfile && profile.bestGameMode) {
+                const result = await getUserBestScore(storedName, profile.bestGameMode);
+                if (result.data) {
+                  setUserProfile(result.data);
+                }
               }
             }
+          } catch (error) {
+            console.error("Error restoring user data:", error);
           }
-          return;
+        } else if (!session?.user) {
+          // No session and no stored name - show overlay
+          setShowOverlay(true);
         }
-      }
-
-      // Restore name-based user state (if not Twitter auth)
-      const storedName = getStoredPlayerName();
-      if (storedName && storedName !== "you") {
-        setPlayerName(storedName);
-        setShowOverlay(false);
         
-        const hasData = await restoreUserDataFromDB(storedName);
-        if (hasData) {
-          const profile = getUserProfile(storedName);
-          if (profile.hasProfile && profile.bestGameMode) {
-            const result = await getUserBestScore(storedName, profile.bestGameMode);
-            if (result.data) {
-              setUserProfile(result.data);
-            }
-          }
-        }
-      } else if (!session?.user) {
-        // No session and no stored name - show overlay
-        setShowOverlay(true);
+        setSessionChecked(true);
+      } catch (error) {
+        console.error("Error in checkSession:", error);
+        setSessionChecked(true);
+      } finally {
+        setSessionLoading(false);
       }
     };
 
@@ -962,16 +991,22 @@ export default function Home() {
           setIsTwitterAuth(true);
           setPlayerName(twitterHandle);
           setStoredPlayerName(twitterHandle);
+          setSessionLoading(false);
+          setSessionChecked(true);
           
-          const hasData = await restoreUserDataFromDB(twitterHandle);
-          if (hasData) {
-            const profile = getUserProfile(twitterHandle);
-            if (profile.hasProfile && profile.bestGameMode) {
-              const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
-              if (result.data) {
-                setUserProfile(result.data);
+          try {
+            const hasData = await restoreUserDataFromDB(twitterHandle);
+            if (hasData) {
+              const profile = getUserProfile(twitterHandle);
+              if (profile.hasProfile && profile.bestGameMode) {
+                const result = await getUserBestScore(twitterHandle, profile.bestGameMode);
+                if (result.data) {
+                  setUserProfile(result.data);
+                }
               }
             }
+          } catch (error) {
+            console.error("Error restoring user data in auth state change:", error);
           }
           
           // Clean up URL hash if present (implicit flow tokens)
@@ -985,6 +1020,8 @@ export default function Home() {
         // Session ended
         setTwitterUser(null);
         setIsTwitterAuth(false);
+        setSessionLoading(false);
+        setSessionChecked(true);
       }
     });
 
@@ -1271,7 +1308,40 @@ export default function Home() {
                         
                         // Only fetch scores if we're opening the menu
                         if (newMenuState) {
+                          setScoresLoading(true);
+                          
+                          // Wait for session to be checked if still loading
+                          if (sessionLoading) {
+                            // Wait for session check to complete
+                            await new Promise((resolve) => {
+                              const checkInterval = setInterval(() => {
+                                if (sessionChecked) {
+                                  clearInterval(checkInterval);
+                                  resolve(void 0);
+                                }
+                              }, 100);
+                              
+                              // Timeout after 5 seconds
+                              setTimeout(() => {
+                                clearInterval(checkInterval);
+                                resolve(void 0);
+                              }, 5000);
+                            });
+                          }
+                          
                           try {
+                            // Verify session is still valid (for Twitter users)
+                            if (isTwitterAuth) {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              if (!session?.user) {
+                                console.warn("Session expired, cannot fetch scores");
+                                setAllUserScores([]);
+                                setUserProfile(null);
+                                setScoresLoading(false);
+                                return;
+                              }
+                            }
+                            
                             // Fetch all scores for all game modes
                             const result = await getAllUserScores(playerName);
                             console.log("getAllUserScores result:", result); // Debug log
@@ -1292,7 +1362,12 @@ export default function Home() {
                             console.error("Error fetching user scores:", error);
                             setAllUserScores([]);
                             setUserProfile(null);
+                          } finally {
+                            setScoresLoading(false);
                           }
+                        } else {
+                          // Closing menu, reset loading state
+                          setScoresLoading(false);
                         }
                     } else {
                         // Still toggle the dropdown even if no player name
@@ -1344,7 +1419,98 @@ export default function Home() {
                         </div>
                       </div>
                           )}
-                          {allUserScores.length > 0 ? (
+                          {scoresLoading || sessionLoading ? (
+                            // Loading state with rectangular loaders
+                            <div className="space-y-3">
+                              {/* Scores loading placeholders */}
+                              {[15, 30, 60].map((mode) => (
+                                <div key={mode} className="flex items-center justify-between">
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '80px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  />
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '60px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                      delay: 0.2
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                              {/* Best rank and score loading placeholders */}
+                              <div className="border-t border-dark-dim/20 pt-3 mt-3 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '70px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  />
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '90px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                      delay: 0.3
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '75px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut"
+                                    }}
+                                  />
+                                  <motion.div
+                                    className="h-4 rounded bg-dark-dim/30"
+                                    style={{ width: '65px' }}
+                                    animate={{
+                                      opacity: [0.4, 0.8, 0.4],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                      delay: 0.4
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ) : allUserScores.length > 0 ? (
                             <>
                               <div className="space-y-2">
                                 {allUserScores.map((score) => (
