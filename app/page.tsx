@@ -907,11 +907,19 @@ export default function Home() {
           error: sessionError,
         } = await supabase.auth.getSession();
 
-        console.log("Session data:", { session, sessionError });
-
+        // Log session data and errors for debugging
+        console.log("=== SESSION CHECK ON PAGE LOAD ===");
+        console.log("Session data:", session);
+        console.log("Session user:", session?.user);
+        console.log("Session access_token:", session?.access_token ? "Present" : "Missing");
+        console.log("Session refresh_token:", session?.refresh_token ? "Present" : "Missing");
+        console.log("Session expires_at (timestamp):", session?.expires_at);
+        console.log("Session expires_at (ISO):", session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : "N/A");
+        console.log("SessionError:", sessionError);
         if (sessionError) {
           console.error("Error getting session:", sessionError);
         }
+        console.log("====================================");
 
         if (session?.user) {
           const twitterHandle = session.user.user_metadata?.user_name;
@@ -983,7 +991,16 @@ export default function Home() {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("=== AUTH STATE CHANGE ===");
+      console.log("Event:", event);
+      console.log("Session:", session);
+      console.log("Session user:", session?.user);
+      console.log("Session access_token:", session?.access_token ? "Present" : "Missing");
+      console.log("Session refresh_token:", session?.refresh_token ? "Present" : "Missing");
+      console.log("Session expires_at:", session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : "N/A");
+      console.log("=========================");
+      
       if (session?.user) {
         const twitterHandle = session.user.user_metadata?.user_name;
         
