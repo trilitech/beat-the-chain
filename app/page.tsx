@@ -891,7 +891,10 @@ export default function Home() {
   // Check for existing session on mount and restore state
   useEffect(() => {
     const checkSession = async () => {
+      console.log("=== SESSION CHECK STARTING ===");
+      console.log("Setting sessionLoading to: true");
       setSessionLoading(true);
+      console.log("sessionLoading should now be: true");
       
       try {
         // Check for OAuth errors in URL
@@ -956,8 +959,10 @@ export default function Home() {
               console.error("Error restoring user data:", error);
             }
             
+            console.log("Twitter user found - setting sessionChecked and sessionLoading to false");
             setSessionChecked(true);
             setSessionLoading(false);
+            console.log("sessionLoading should now be: false");
             return;
           }
         }
@@ -992,7 +997,10 @@ export default function Home() {
         console.error("Error in checkSession:", error);
         setSessionChecked(true);
       } finally {
+        console.log("=== SESSION CHECK COMPLETE ===");
+        console.log("Setting sessionLoading to: false");
         setSessionLoading(false);
+        console.log("sessionLoading should now be: false");
       }
     };
 
@@ -1020,8 +1028,11 @@ export default function Home() {
           setIsTwitterAuth(true);
           setPlayerName(twitterHandle);
           setStoredPlayerName(twitterHandle);
+          console.log("=== AUTH STATE CHANGE - Twitter user signed in ===");
+          console.log("Setting sessionLoading to: false");
           setSessionLoading(false);
           setSessionChecked(true);
+          console.log("sessionLoading should now be: false");
           
           try {
             const hasData = await restoreUserDataFromDB(twitterHandle);
@@ -1049,13 +1060,26 @@ export default function Home() {
         // Session ended
         setTwitterUser(null);
         setIsTwitterAuth(false);
+        console.log("=== AUTH STATE CHANGE - Session ended ===");
+        console.log("Setting sessionLoading to: false");
         setSessionLoading(false);
         setSessionChecked(true);
+        console.log("sessionLoading should now be: false");
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Log sessionLoading and scoresLoading whenever they change
+  useEffect(() => {
+    console.log("=== STATE UPDATE: sessionLoading / scoresLoading ===");
+    console.log("sessionLoading:", sessionLoading);
+    console.log("scoresLoading:", scoresLoading);
+    console.log("isTwitterAuth:", isTwitterAuth);
+    console.log("playerName:", playerName);
+    console.log("showUserMenu:", showUserMenu);
+  }, [sessionLoading, scoresLoading, isTwitterAuth, playerName, showUserMenu]);
 
   // Overlay is already set synchronously in useState initializer above
   // No need for this useEffect
@@ -1337,7 +1361,13 @@ export default function Home() {
                         
                         // Only fetch scores if we're opening the menu
                         if (newMenuState) {
+                          console.log("=== SETTINGS DROPDOWN - OPENING ===");
+                          console.log("sessionLoading:", sessionLoading);
+                          console.log("scoresLoading:", scoresLoading);
+                          console.log("playerName:", playerName);
+                          console.log("isTwitterAuth:", isTwitterAuth);
                           setScoresLoading(true);
+                          console.log("After setScoresLoading(true) - scoresLoading should be: true");
                           
                           // Don't wait for session check - queries are public reads and work immediately
                           // Same logic for name-based and Twitter users
@@ -1346,6 +1376,8 @@ export default function Home() {
                             console.log("=== SETTINGS DROPDOWN - FETCHING SCORES ===");
                             console.log("playerName:", playerName);
                             console.log("isTwitterAuth:", isTwitterAuth);
+                            console.log("sessionLoading at fetch start:", sessionLoading);
+                            console.log("scoresLoading at fetch start:", true);
                             console.log("Note: Queries work the same for name-based and Twitter users (public reads by player_name)");
                             
                             // No session check needed - queries are public reads by player_name
@@ -1389,7 +1421,9 @@ export default function Home() {
                             setAllUserScores([]);
                             setUserProfile(null);
                           } finally {
+                            console.log("Setting scoresLoading to false");
                             setScoresLoading(false);
+                            console.log("After setScoresLoading(false) - scoresLoading should be: false");
                           }
                         } else {
                           // Closing menu, reset loading state
