@@ -137,30 +137,20 @@ export async function getLeaderboard(
     console.log("Fetching leaderboard for gameMode:", gameMode, "limit:", limit);
     
     // Note: Leaderboard queries are public reads and don't require authentication
-    // Session check is non-blocking and only for logging purposes
-    let sessionForLogging: any = null;
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        sessionForLogging = session;
-        console.log("Session check (async) - Session exists:", !!session);
-        console.log("Session check (async) - Session user:", session?.user?.id);
-      })
-      .catch((err) => {
-        console.error("Session check (async) error:", err);
-      });
-    
-    // Fetch all entries for this game mode so we can properly sort by accuracy-weighted score
-    // Use a high limit to get all entries (Supabase default max is reasonable)
+    // Same logic works for name-based and Twitter auth users
     console.log("Starting database query (public read, no auth required)...");
+    
     const queryStartTime = Date.now();
+    
+    // Direct query - same as name-based users use (no session check needed)
     const { data, error } = await supabase
       .from("game_results")
       .select("*")
       .eq("game_mode", gameMode)
       .limit(10000); // Fetch a large number to ensure we get all entries for proper sorting
+    
     const queryEndTime = Date.now();
     console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
-
     console.log("Query result - data count:", data?.length || 0);
     console.log("Query result - error:", error);
     
@@ -259,20 +249,12 @@ export async function getUserBestScore(
     console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
     
     // Note: User score queries are public reads and don't require authentication
-    // Session check is non-blocking and only for logging purposes
-    let sessionForLogging: any = null;
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        sessionForLogging = session;
-        console.log("Session check (async) - Session exists:", !!session);
-        console.log("Session check (async) - Session user:", session?.user?.id);
-      })
-      .catch((err) => {
-        console.error("Session check (async) error:", err);
-      });
-    
+    // Same logic works for name-based and Twitter auth users
     console.log("Starting database query (public read, no auth required)...");
+    
     const queryStartTime = Date.now();
+    
+    // Direct query - same as name-based users use (no session check needed)
     const { data, error } = await supabase
       .from("game_results")
       .select("*")
@@ -281,9 +263,9 @@ export async function getUserBestScore(
       .order("score", { ascending: false })
       .limit(1)
       .single();
+    
     const queryEndTime = Date.now();
     console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
-
     console.log("Query result - data:", data);
     console.log("Query result - error:", error);
     
@@ -295,7 +277,6 @@ export async function getUserBestScore(
         return { data: null };
       }
       console.error("Error fetching user best score:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
       console.log("==========================");
       return { data: null, error: error.message };
     }
