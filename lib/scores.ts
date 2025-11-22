@@ -182,12 +182,13 @@ export async function getLeaderboard(
       
       console.log("Query promise created, adding timeout wrapper...");
       
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging (15 seconds to account for slower connections)
       const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {
         setTimeout(() => {
-          console.error(`⚠️ Database query timed out after 10 seconds`);
+          console.error(`⚠️ Database query timed out after 15 seconds`);
+          console.error(`Query was for gameMode: ${gameMode}`);
           resolve({ data: null, error: new Error("Database query timeout") });
-        }, 10000);
+        }, 15000);
       });
       
       console.log("Race between query and timeout starting...");
@@ -349,12 +350,13 @@ export async function getUserBestScore(
       
       console.log("Query promise created, adding timeout wrapper...");
       
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging (15 seconds to account for slower connections)
       const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {
         setTimeout(() => {
-          console.error(`⚠️ Database query timed out after 10 seconds`);
+          console.error(`⚠️ Database query timed out after 15 seconds`);
+          console.error(`Query was for playerName: ${playerName}, gameMode: ${gameMode}`);
           resolve({ data: null, error: new Error("Database query timeout") });
-        }, 10000);
+        }, 15000);
       });
       
       console.log("Race between query and timeout starting...");
@@ -364,6 +366,7 @@ export async function getUserBestScore(
         // Timeout occurred
         const queryEndTime = Date.now();
         console.error(`❌ Database query timed out after ${queryEndTime - queryStartTime}ms`);
+        console.error(`Failed query: playerName: ${playerName}, gameMode: ${gameMode}`);
         console.log("==========================");
         return { data: null, error: queryResult.error.message };
       }
@@ -428,16 +431,23 @@ export async function getAllUserScores(
     const allScores: LeaderboardEntry[] = [];
 
     // Fetch best score for each game mode
+    // Add error handling to prevent one failed query from blocking others
     for (const mode of gameModes) {
-      console.log(`Fetching scores for mode ${mode}...`);
-      const result = await getUserBestScore(playerName, mode);
-      if (result.data) {
-        console.log(`Found score for mode ${mode}:`, result.data.score);
-        allScores.push(result.data);
-      } else if (result.error) {
-        console.error(`Error fetching mode ${mode}:`, result.error);
-      } else {
-        console.log(`No score found for mode ${mode}`);
+      try {
+        console.log(`Fetching scores for mode ${mode}...`);
+        const result = await getUserBestScore(playerName, mode);
+        if (result.data) {
+          console.log(`✅ Found score for mode ${mode}:`, result.data.score);
+          allScores.push(result.data);
+        } else if (result.error) {
+          console.error(`❌ Error fetching mode ${mode}:`, result.error);
+          // Continue to next mode even if this one failed
+        } else {
+          console.log(`ℹ️ No score found for mode ${mode} (not an error)`);
+        }
+      } catch (err) {
+        console.error(`❌ Exception fetching mode ${mode}:`, err);
+        // Continue to next mode even if this one threw an exception
       }
     }
 
