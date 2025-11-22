@@ -1445,7 +1445,7 @@ export default function Home() {
                         </div>
                       </div>
                           )}
-                          {scoresLoading || sessionLoading ? (
+                          {scoresLoading ? (
                             // Loading state with rectangular loaders
                             <div className="space-y-3">
                               {/* Scores loading placeholders */}
