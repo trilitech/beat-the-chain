@@ -18,6 +18,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true, // Automatically refresh tokens (default)
     detectSessionInUrl: true, // Automatically detect session from URL hash (implicit flow)
   },
+  global: {
+    headers: {
+      // Don't send auth headers for public read queries - let RLS handle it
+      // This ensures queries work the same whether user is authenticated or not
+    },
+  },
+});
+
+// Create a separate anonymous client for public read queries
+// This ensures queries work the same way regardless of authentication state
+export const supabaseAnonymous = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false, // Don't persist sessions for this client
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
 });
 
 // Server-side client (uses service role key for writes)

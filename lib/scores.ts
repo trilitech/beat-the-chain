@@ -1,5 +1,20 @@
-import { supabase } from "./supabase";
+import { supabase, supabaseAnonymous } from "./supabase";
 import type { GameResult, LeaderboardEntry } from "./types";
+
+// Debug helper to check Supabase client
+function checkSupabaseClient() {
+  console.log("=== SUPABASE CLIENT CHECK ===");
+  console.log("Client exists:", !!supabase);
+  console.log("Client URL:", (supabase as any)?._url || "unknown");
+  console.log("Client key present:", !!((supabase as any)?._key || "unknown"));
+  
+  // Check if environment variables are available
+  if (typeof window !== "undefined") {
+    console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "Present" : "Missing");
+    console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Present" : "Missing");
+  }
+  console.log("===========================");
+}
 
 /**
  * Get best score from localStorage
@@ -136,6 +151,9 @@ export async function getLeaderboard(
     console.log("=== getLeaderboard DEBUG ===");
     console.log("Fetching leaderboard for gameMode:", gameMode, "limit:", limit);
     
+    // Check Supabase client
+    checkSupabaseClient();
+    
     // Note: Leaderboard queries are public reads and don't require authentication
     // Same logic works for name-based and Twitter auth users
     console.log("Starting database query (public read, no auth required)...");
@@ -143,16 +161,35 @@ export async function getLeaderboard(
     const queryStartTime = Date.now();
     
     // Direct query - same as name-based users use (no session check needed)
-    const { data, error } = await supabase
-      .from("game_results")
-      .select("*")
-      .eq("game_mode", gameMode)
-      .limit(10000); // Fetch a large number to ensure we get all entries for proper sorting
+    console.log("Making Supabase query to game_results table...");
+    console.log("Query params: game_mode =", gameMode);
+    console.log("Query promise created, awaiting response...");
     
-    const queryEndTime = Date.now();
-    console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
-    console.log("Query result - data count:", data?.length || 0);
-    console.log("Query result - error:", error);
+    let data: any = null;
+    let error: any = null;
+    
+    try {
+      // Use anonymous client for public reads - ensures same behavior for all users
+      const result = await supabaseAnonymous
+        .from("game_results")
+        .select("*")
+        .eq("game_mode", gameMode)
+        .limit(10000);
+      
+      data = result.data;
+      error = result.error;
+      const queryEndTime = Date.now();
+      console.log(`✅ Database query completed in ${queryEndTime - queryStartTime}ms`);
+      console.log("Query result - data count:", data?.length || 0);
+      console.log("Query result - error:", error);
+    } catch (queryErr) {
+      const queryEndTime = Date.now();
+      console.error(`❌ Database query failed after ${queryEndTime - queryStartTime}ms`);
+      console.error("Query exception:", queryErr);
+      console.error("Error type:", typeof queryErr);
+      console.error("Error details:", JSON.stringify(queryErr, Object.getOwnPropertyNames(queryErr), 2));
+      throw queryErr;
+    }
     
     if (error) {
       console.error("Error fetching leaderboard:", error);
@@ -168,13 +205,13 @@ export async function getLeaderboard(
     }
 
     // Calculate accuracy-weighted score for each entry and sort
-    const entriesWithWeightedScore = data.map((entry) => ({
+    const entriesWithWeightedScore = data.map((entry: LeaderboardEntry) => ({
       ...entry,
       weightedScore: calculateAccuracyWeightedScore(entry.lps, entry.accuracy),
     }));
 
     // Sort by weighted score (descending), then by accuracy (descending) as tiebreaker, then by lps
-    entriesWithWeightedScore.sort((a, b) => {
+    entriesWithWeightedScore.sort((a: LeaderboardEntry & { weightedScore: number }, b: LeaderboardEntry & { weightedScore: number }) => {
       // Primary sort: weighted score (higher is better)
       if (Math.abs(b.weightedScore - a.weightedScore) > 0.0001) {
         return b.weightedScore - a.weightedScore;
@@ -188,7 +225,7 @@ export async function getLeaderboard(
     });
 
     // Return top entries (remove the weightedScore property before returning)
-    const topEntries = entriesWithWeightedScore.slice(0, limit).map(({ weightedScore, ...entry }) => entry);
+    const topEntries = entriesWithWeightedScore.slice(0, limit).map(({ weightedScore, ...entry }: LeaderboardEntry & { weightedScore: number }) => entry);
 
     console.log(`Returning ${topEntries.length} top entries`);
     console.log("==========================");
@@ -248,6 +285,9 @@ export async function getUserBestScore(
     console.log("=== getUserBestScore DEBUG ===");
     console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
     
+    // Check Supabase client
+    checkSupabaseClient();
+    
     // Note: User score queries are public reads and don't require authentication
     // Same logic works for name-based and Twitter auth users
     console.log("Starting database query (public read, no auth required)...");
@@ -255,19 +295,38 @@ export async function getUserBestScore(
     const queryStartTime = Date.now();
     
     // Direct query - same as name-based users use (no session check needed)
-    const { data, error } = await supabase
-      .from("game_results")
-      .select("*")
-      .eq("player_name", playerName)
-      .eq("game_mode", gameMode)
-      .order("score", { ascending: false })
-      .limit(1)
-      .single();
+    console.log("Making Supabase query to game_results table...");
+    console.log("Query params: player_name =", playerName, "game_mode =", gameMode);
+    console.log("Query promise created, awaiting response...");
     
-    const queryEndTime = Date.now();
-    console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
-    console.log("Query result - data:", data);
-    console.log("Query result - error:", error);
+    let data: any = null;
+    let error: any = null;
+    
+    try {
+      // Use anonymous client for public reads - ensures same behavior for all users
+      const result = await supabaseAnonymous
+        .from("game_results")
+        .select("*")
+        .eq("player_name", playerName)
+        .eq("game_mode", gameMode)
+        .order("score", { ascending: false })
+        .limit(1)
+        .single();
+      
+      data = result.data;
+      error = result.error;
+      const queryEndTime = Date.now();
+      console.log(`✅ Database query completed in ${queryEndTime - queryStartTime}ms`);
+      console.log("Query result - data:", data);
+      console.log("Query result - error:", error);
+    } catch (queryErr) {
+      const queryEndTime = Date.now();
+      console.error(`❌ Database query failed after ${queryEndTime - queryStartTime}ms`);
+      console.error("Query exception:", queryErr);
+      console.error("Error type:", typeof queryErr);
+      console.error("Error details:", JSON.stringify(queryErr, Object.getOwnPropertyNames(queryErr), 2));
+      throw queryErr;
+    }
     
     if (error) {
       // If no record found, that's okay
@@ -303,11 +362,7 @@ export async function getAllUserScores(
   try {
     console.log("=== getAllUserScores START ===");
     console.log("Fetching scores for playerName:", playerName);
-    
-    // Check session before query
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log("Session exists:", !!session);
-    console.log("Session user:", session?.user?.id);
+    console.log("Note: Public read query by player_name (same for name-based and Twitter users)");
     
     const gameModes = [15, 30, 60];
     const allScores: LeaderboardEntry[] = [];

@@ -1339,54 +1339,32 @@ export default function Home() {
                         if (newMenuState) {
                           setScoresLoading(true);
                           
-                          // Wait for session to be checked if still loading
-                          if (sessionLoading) {
-                            // Wait for session check to complete
-                            await new Promise((resolve) => {
-                              const checkInterval = setInterval(() => {
-                                if (sessionChecked) {
-                                  clearInterval(checkInterval);
-                                  resolve(void 0);
-                                }
-                              }, 100);
-                              
-                              // Timeout after 5 seconds
-                              setTimeout(() => {
-                                clearInterval(checkInterval);
-                                resolve(void 0);
-                              }, 5000);
-                            });
-                          }
+                          // Don't wait for session check - queries are public reads and work immediately
+                          // Same logic for name-based and Twitter users
                           
                           try {
                             console.log("=== SETTINGS DROPDOWN - FETCHING SCORES ===");
                             console.log("playerName:", playerName);
                             console.log("isTwitterAuth:", isTwitterAuth);
+                            console.log("Note: Queries work the same for name-based and Twitter users (public reads by player_name)");
                             
-                            // Verify session is still valid (for Twitter users)
-                            if (isTwitterAuth) {
-                              const { data: { session } } = await supabase.auth.getSession();
-                              console.log("Session check for Twitter user:", {
-                                hasSession: !!session,
-                                hasUser: !!session?.user,
-                                userId: session?.user?.id,
-                                userName: session?.user?.user_metadata?.user_name
-                              });
-                              
-                              if (!session?.user) {
-                                console.warn("Session expired, cannot fetch scores");
-                                setAllUserScores([]);
-                                setUserProfile(null);
-                                setScoresLoading(false);
-                                return;
-                              }
-                            }
+                            // No session check needed - queries are public reads by player_name
+                            // Works the same way for both name-based and Twitter auth users
                             
                             // Fetch all scores for all game modes
+                            console.log("Calling getAllUserScores...");
+                            const queryStartTime = Date.now();
                             const result = await getAllUserScores(playerName);
+                            const queryEndTime = Date.now();
+                            console.log(`getAllUserScores completed in ${queryEndTime - queryStartTime}ms`);
                             console.log("getAllUserScores result:", result);
                             console.log("Result data length:", result.data?.length || 0);
                             console.log("Result error:", result.error);
+                            
+                            // Log full error details if present
+                            if (result.error) {
+                              console.error("Error details:", JSON.stringify(result.error, null, 2));
+                            }
                             
                             if (result.data && result.data.length > 0) {
                               console.log("Setting scores in state:", result.data);
