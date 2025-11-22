@@ -138,7 +138,7 @@ export async function getLeaderboard(
     
     // Check session before query (with timeout to prevent hanging)
     console.log("Checking session...");
-    const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) => 
+    const sessionTimeout = new Promise<{ data: { session: any }, error: any }>((resolve) => 
       setTimeout(() => {
         console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
         resolve({ data: { session: null }, error: new Error("Session check timeout") });
@@ -151,7 +151,8 @@ export async function getLeaderboard(
     });
     
     // Race between session check and timeout - whichever completes first
-    const { data: { session } } = await Promise.race([sessionCheck, sessionTimeout]);
+    const sessionResult = await Promise.race([sessionCheck, sessionTimeout]);
+    const { data: { session } } = sessionResult;
     console.log("Session check completed");
     console.log("Session exists:", !!session);
     console.log("Session user:", session?.user?.id);
@@ -262,14 +263,12 @@ export async function getUserBestScore(
   gameMode: number
 ): Promise<{ data: LeaderboardEntry | null; error?: string }> {
   try {
-    // Check session before query
-    const { data: { session } } = await supabase.auth.getSession();
     console.log("=== getUserBestScore DEBUG ===");
     console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
     
     // Check session before query (with timeout to prevent hanging)
     console.log("Checking session...");
-    const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) => 
+    const sessionTimeout = new Promise<{ data: { session: any }, error: any }>((resolve) => 
       setTimeout(() => {
         console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
         resolve({ data: { session: null }, error: new Error("Session check timeout") });
@@ -282,7 +281,8 @@ export async function getUserBestScore(
     });
     
     // Race between session check and timeout - whichever completes first
-    const { data: { session } } = await Promise.race([sessionCheck, sessionTimeout]);
+    const sessionResult = await Promise.race([sessionCheck, sessionTimeout]);
+    const { data: { session } } = sessionResult;
     console.log("Session check completed");
     console.log("Session exists:", !!session);
     console.log("Session user:", session?.user?.id);
