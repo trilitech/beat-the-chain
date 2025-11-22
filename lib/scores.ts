@@ -136,30 +136,22 @@ export async function getLeaderboard(
     console.log("=== getLeaderboard DEBUG ===");
     console.log("Fetching leaderboard for gameMode:", gameMode, "limit:", limit);
     
-    // Check session before query (with timeout to prevent hanging)
-    console.log("Checking session...");
-    const sessionTimeout = new Promise<{ data: { session: any }, error: any }>((resolve) => 
-      setTimeout(() => {
-        console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
-        resolve({ data: { session: null }, error: new Error("Session check timeout") });
-      }, 5000)
-    );
-    
-    const sessionCheck = supabase.auth.getSession().catch((err) => {
-      console.error("Error getting session:", err);
-      return { data: { session: null }, error: err };
-    });
-    
-    // Race between session check and timeout - whichever completes first
-    const sessionResult = await Promise.race([sessionCheck, sessionTimeout]);
-    const { data: { session } } = sessionResult;
-    console.log("Session check completed");
-    console.log("Session exists:", !!session);
-    console.log("Session user:", session?.user?.id);
+    // Note: Leaderboard queries are public reads and don't require authentication
+    // Session check is non-blocking and only for logging purposes
+    let sessionForLogging: any = null;
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        sessionForLogging = session;
+        console.log("Session check (async) - Session exists:", !!session);
+        console.log("Session check (async) - Session user:", session?.user?.id);
+      })
+      .catch((err) => {
+        console.error("Session check (async) error:", err);
+      });
     
     // Fetch all entries for this game mode so we can properly sort by accuracy-weighted score
     // Use a high limit to get all entries (Supabase default max is reasonable)
-    console.log("Starting database query...");
+    console.log("Starting database query (public read, no auth required)...");
     const queryStartTime = Date.now();
     const { data, error } = await supabase
       .from("game_results")
@@ -266,28 +258,20 @@ export async function getUserBestScore(
     console.log("=== getUserBestScore DEBUG ===");
     console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
     
-    // Check session before query (with timeout to prevent hanging)
-    console.log("Checking session...");
-    const sessionTimeout = new Promise<{ data: { session: any }, error: any }>((resolve) => 
-      setTimeout(() => {
-        console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
-        resolve({ data: { session: null }, error: new Error("Session check timeout") });
-      }, 5000)
-    );
+    // Note: User score queries are public reads and don't require authentication
+    // Session check is non-blocking and only for logging purposes
+    let sessionForLogging: any = null;
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        sessionForLogging = session;
+        console.log("Session check (async) - Session exists:", !!session);
+        console.log("Session check (async) - Session user:", session?.user?.id);
+      })
+      .catch((err) => {
+        console.error("Session check (async) error:", err);
+      });
     
-    const sessionCheck = supabase.auth.getSession().catch((err) => {
-      console.error("Error getting session:", err);
-      return { data: { session: null }, error: err };
-    });
-    
-    // Race between session check and timeout - whichever completes first
-    const sessionResult = await Promise.race([sessionCheck, sessionTimeout]);
-    const { data: { session } } = sessionResult;
-    console.log("Session check completed");
-    console.log("Session exists:", !!session);
-    console.log("Session user:", session?.user?.id);
-    
-    console.log("Starting database query...");
+    console.log("Starting database query (public read, no auth required)...");
     const queryStartTime = Date.now();
     const { data, error } = await supabase
       .from("game_results")
