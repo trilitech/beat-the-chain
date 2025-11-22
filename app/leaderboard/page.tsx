@@ -39,19 +39,27 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
+      console.log("=== LEADERBOARD PAGE - FETCHING ===");
+      console.log("gameMode:", gameMode);
       setLoading(true);
       setError(null);
       // Fetch a large number of entries for pagination (500 should be enough)
       const { data, error: fetchError } = await getLeaderboard(gameMode, 500);
+      console.log("Leaderboard fetch result - data length:", data?.length || 0);
+      console.log("Leaderboard fetch result - error:", fetchError);
+      
       if (fetchError) {
+        console.error("Error fetching leaderboard:", fetchError);
         setError(fetchError);
         setLeaders([]);
       } else {
+        console.log("Setting leaders data:", data?.length || 0, "entries");
         setLeaders(data || []);
       }
       setLoading(false);
       // Reset to page 1 when game mode changes
       setCurrentPage(1);
+      console.log("=== LEADERBOARD PAGE - DONE ===");
     };
 
     fetchLeaderboard();

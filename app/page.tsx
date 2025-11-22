@@ -610,25 +610,35 @@ export default function Home() {
 
   // Fetch rankings for the current game mode
   const fetchRankings = useCallback(async () => {
+    console.log("=== HOME PAGE - FETCHING RANKINGS ===");
+    console.log("gameMode:", gameMode);
+    console.log("playerName:", playerName);
     setRankingsLoading(true);
     try {
       // Fetch more entries to find current user's position
       const { data, error } = await getLeaderboard(gameMode, 100); // Get top 100 to find user position
+      console.log("Rankings fetch result - data length:", data?.length || 0);
+      console.log("Rankings fetch result - error:", error);
+      
       if (error) {
         console.error("Error fetching leaderboard:", error);
         setRankings([]);
       } else if (data) {
+        console.log("Setting rankings data:", data.length, "entries");
         setRankings(data);
       } else {
+        console.log("No rankings data returned");
         setRankings([]);
       }
+      console.log("=== HOME PAGE - RANKINGS DONE ===");
     } catch (err) {
       console.error("Unexpected error fetching leaderboard:", err);
+      console.error("Error stack:", err instanceof Error ? err.stack : "No stack");
       setRankings([]);
     } finally {
       setRankingsLoading(false);
     }
-  }, [gameMode]);
+  }, [gameMode, playerName]);
 
   // Load leaderboard on initial mount (only once)
   useEffect(() => {
@@ -1349,9 +1359,20 @@ export default function Home() {
                           }
                           
                           try {
+                            console.log("=== SETTINGS DROPDOWN - FETCHING SCORES ===");
+                            console.log("playerName:", playerName);
+                            console.log("isTwitterAuth:", isTwitterAuth);
+                            
                             // Verify session is still valid (for Twitter users)
                             if (isTwitterAuth) {
                               const { data: { session } } = await supabase.auth.getSession();
+                              console.log("Session check for Twitter user:", {
+                                hasSession: !!session,
+                                hasUser: !!session?.user,
+                                userId: session?.user?.id,
+                                userName: session?.user?.user_metadata?.user_name
+                              });
+                              
                               if (!session?.user) {
                                 console.warn("Session expired, cannot fetch scores");
                                 setAllUserScores([]);
@@ -1363,9 +1384,12 @@ export default function Home() {
                             
                             // Fetch all scores for all game modes
                             const result = await getAllUserScores(playerName);
-                            console.log("getAllUserScores result:", result); // Debug log
+                            console.log("getAllUserScores result:", result);
+                            console.log("Result data length:", result.data?.length || 0);
+                            console.log("Result error:", result.error);
                             
                             if (result.data && result.data.length > 0) {
+                              console.log("Setting scores in state:", result.data);
                               setAllUserScores(result.data);
                               // Set the best score as the primary profile (for backward compatibility)
                               const bestScore = result.data.reduce((best, current) => 
@@ -1373,12 +1397,17 @@ export default function Home() {
                               );
                               setUserProfile(bestScore);
                             } else {
-                              console.log("No scores found for player:", playerName); // Debug log
+                              console.log("No scores found for player:", playerName);
+                              if (result.error) {
+                                console.error("Error from getAllUserScores:", result.error);
+                              }
                               setAllUserScores([]);
                               setUserProfile(null);
                             }
+                            console.log("=== SETTINGS DROPDOWN - DONE ===");
                           } catch (error) {
                             console.error("Error fetching user scores:", error);
+                            console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
                             setAllUserScores([]);
                             setUserProfile(null);
                           } finally {

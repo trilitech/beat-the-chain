@@ -133,6 +133,14 @@ export async function getLeaderboard(
   limit: number = 10
 ): Promise<{ data: LeaderboardEntry[] | null; error?: string }> {
   try {
+    console.log("=== getLeaderboard DEBUG ===");
+    console.log("Fetching leaderboard for gameMode:", gameMode, "limit:", limit);
+    
+    // Check session before query
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Session exists:", !!session);
+    console.log("Session user:", session?.user?.id);
+    
     // Fetch all entries for this game mode so we can properly sort by accuracy-weighted score
     // Use a high limit to get all entries (Supabase default max is reasonable)
     const { data, error } = await supabase
@@ -141,12 +149,19 @@ export async function getLeaderboard(
       .eq("game_mode", gameMode)
       .limit(10000); // Fetch a large number to ensure we get all entries for proper sorting
 
+    console.log("Query result - data count:", data?.length || 0);
+    console.log("Query result - error:", error);
+    
     if (error) {
       console.error("Error fetching leaderboard:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.log("==========================");
       return { data: null, error: error.message };
     }
 
     if (!data || data.length === 0) {
+      console.log("No leaderboard data found");
+      console.log("==========================");
       return { data: [] };
     }
 
@@ -173,9 +188,12 @@ export async function getLeaderboard(
     // Return top entries (remove the weightedScore property before returning)
     const topEntries = entriesWithWeightedScore.slice(0, limit).map(({ weightedScore, ...entry }) => entry);
 
+    console.log(`Returning ${topEntries.length} top entries`);
+    console.log("==========================");
     return { data: topEntries as LeaderboardEntry[] };
   } catch (err) {
     console.error("Unexpected error fetching leaderboard:", err);
+    console.error("Error stack:", err instanceof Error ? err.stack : "No stack");
     return {
       data: null,
       error: err instanceof Error ? err.message : "Unknown error",
@@ -225,6 +243,13 @@ export async function getUserBestScore(
   gameMode: number
 ): Promise<{ data: LeaderboardEntry | null; error?: string }> {
   try {
+    // Check session before query
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("=== getUserBestScore DEBUG ===");
+    console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
+    console.log("Session exists:", !!session);
+    console.log("Session user:", session?.user?.id);
+    
     const { data, error } = await supabase
       .from("game_results")
       .select("*")
@@ -234,18 +259,28 @@ export async function getUserBestScore(
       .limit(1)
       .single();
 
+    console.log("Query result - data:", data);
+    console.log("Query result - error:", error);
+    
     if (error) {
       // If no record found, that's okay
       if (error.code === "PGRST116") {
+        console.log("No record found (PGRST116)");
+        console.log("==========================");
         return { data: null };
       }
       console.error("Error fetching user best score:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      console.log("==========================");
       return { data: null, error: error.message };
     }
 
+    console.log("Successfully fetched user best score");
+    console.log("==========================");
     return { data: data as LeaderboardEntry };
   } catch (err) {
     console.error("Unexpected error fetching user best score:", err);
+    console.error("Error stack:", err instanceof Error ? err.stack : "No stack");
     return {
       data: null,
       error: err instanceof Error ? err.message : "Unknown error",
@@ -260,23 +295,40 @@ export async function getAllUserScores(
   playerName: string
 ): Promise<{ data: LeaderboardEntry[]; error?: string }> {
   try {
+    console.log("=== getAllUserScores START ===");
+    console.log("Fetching scores for playerName:", playerName);
+    
+    // Check session before query
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("Session exists:", !!session);
+    console.log("Session user:", session?.user?.id);
+    
     const gameModes = [15, 30, 60];
     const allScores: LeaderboardEntry[] = [];
 
     // Fetch best score for each game mode
     for (const mode of gameModes) {
+      console.log(`Fetching scores for mode ${mode}...`);
       const result = await getUserBestScore(playerName, mode);
       if (result.data) {
+        console.log(`Found score for mode ${mode}:`, result.data.score);
         allScores.push(result.data);
+      } else if (result.error) {
+        console.error(`Error fetching mode ${mode}:`, result.error);
+      } else {
+        console.log(`No score found for mode ${mode}`);
       }
     }
 
     // Sort by game mode (15, 30, 60)
     allScores.sort((a, b) => a.game_mode - b.game_mode);
 
+    console.log(`Total scores found: ${allScores.length}`);
+    console.log("=== getAllUserScores END ===");
     return { data: allScores };
   } catch (err) {
     console.error("Unexpected error fetching all user scores:", err);
+    console.error("Error stack:", err instanceof Error ? err.stack : "No stack");
     return {
       data: [],
       error: err instanceof Error ? err.message : "Unknown error",
