@@ -136,18 +136,37 @@ export async function getLeaderboard(
     console.log("=== getLeaderboard DEBUG ===");
     console.log("Fetching leaderboard for gameMode:", gameMode, "limit:", limit);
     
-    // Check session before query
-    const { data: { session } } = await supabase.auth.getSession();
+    // Check session before query (with timeout to prevent hanging)
+    console.log("Checking session...");
+    const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) => 
+      setTimeout(() => {
+        console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
+        resolve({ data: { session: null }, error: new Error("Session check timeout") });
+      }, 5000)
+    );
+    
+    const sessionCheck = supabase.auth.getSession().catch((err) => {
+      console.error("Error getting session:", err);
+      return { data: { session: null }, error: err };
+    });
+    
+    // Race between session check and timeout - whichever completes first
+    const { data: { session } } = await Promise.race([sessionCheck, sessionTimeout]);
+    console.log("Session check completed");
     console.log("Session exists:", !!session);
     console.log("Session user:", session?.user?.id);
     
     // Fetch all entries for this game mode so we can properly sort by accuracy-weighted score
     // Use a high limit to get all entries (Supabase default max is reasonable)
+    console.log("Starting database query...");
+    const queryStartTime = Date.now();
     const { data, error } = await supabase
       .from("game_results")
       .select("*")
       .eq("game_mode", gameMode)
       .limit(10000); // Fetch a large number to ensure we get all entries for proper sorting
+    const queryEndTime = Date.now();
+    console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
 
     console.log("Query result - data count:", data?.length || 0);
     console.log("Query result - error:", error);
@@ -247,9 +266,29 @@ export async function getUserBestScore(
     const { data: { session } } = await supabase.auth.getSession();
     console.log("=== getUserBestScore DEBUG ===");
     console.log("Querying for playerName:", playerName, "gameMode:", gameMode);
+    
+    // Check session before query (with timeout to prevent hanging)
+    console.log("Checking session...");
+    const sessionTimeout = new Promise<{ data: { session: null }, error: Error }>((resolve) => 
+      setTimeout(() => {
+        console.warn("⚠️ Session check timed out after 5 seconds - continuing without session check");
+        resolve({ data: { session: null }, error: new Error("Session check timeout") });
+      }, 5000)
+    );
+    
+    const sessionCheck = supabase.auth.getSession().catch((err) => {
+      console.error("Error getting session:", err);
+      return { data: { session: null }, error: err };
+    });
+    
+    // Race between session check and timeout - whichever completes first
+    const { data: { session } } = await Promise.race([sessionCheck, sessionTimeout]);
+    console.log("Session check completed");
     console.log("Session exists:", !!session);
     console.log("Session user:", session?.user?.id);
     
+    console.log("Starting database query...");
+    const queryStartTime = Date.now();
     const { data, error } = await supabase
       .from("game_results")
       .select("*")
@@ -258,6 +297,8 @@ export async function getUserBestScore(
       .order("score", { ascending: false })
       .limit(1)
       .single();
+    const queryEndTime = Date.now();
+    console.log(`Database query completed in ${queryEndTime - queryStartTime}ms`);
 
     console.log("Query result - data:", data);
     console.log("Query result - error:", error);
