@@ -915,10 +915,19 @@ export default function Home() {
         }
 
         // Check for existing session - wait for it to be fully ready
+        // Add timeout to prevent hanging - session check should not block score queries
+        const sessionCheckPromise = supabase.auth.getSession();
+        const sessionTimeoutPromise = new Promise<{ data: { session: null }, error: null }>((resolve) => {
+          setTimeout(() => {
+            console.warn("⚠️ Session check timed out after 5 seconds - continuing without session");
+            resolve({ data: { session: null }, error: null });
+          }, 5000); // 5 second timeout for session check
+        });
+        
         const {
           data: { session },
           error: sessionError,
-        } = await supabase.auth.getSession();
+        } = await Promise.race([sessionCheckPromise, sessionTimeoutPromise]);
 
         // Log session data and errors for debugging
         console.log("=== SESSION CHECK ON PAGE LOAD ===");
