@@ -163,7 +163,23 @@ export default function LeaderboardPage() {
                           </div>
                         </div>
                         <div className="text-left">
-                          <div>{leader.player_name}</div>
+                          <div className="flex items-center gap-2">
+                            {leader.isTwitterUser ? (
+                              <>
+                                <a
+                                  href={`https://x.com/${leader.player_name}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-dark-main hover:text-dark-highlight hover:underline transition-colors"
+                                >
+                                  {leader.player_name}
+                                </a>
+                                <i className="fa-brands fa-x-twitter h-3 w-3 text-dark-dim" />
+                              </>
+                            ) : (
+                              <span>{leader.player_name}</span>
+                            )}
+                          </div>
                           <div className="text-xs text-dark-dim">{leader.game_mode} words</div>
                         </div>
                         <div className="text-right text-dark-main">{leader.score.toFixed(2)}</div>
