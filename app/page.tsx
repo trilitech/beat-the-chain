@@ -2295,111 +2295,50 @@ export default function Home() {
             >
               <div className="pb-5">
                 <h1 className="text-4xl font-bold text-dark-highlight font-nfs text-center">
-                  Proof of Speed
+                  WELCOME TO PROOF OF SPEED
                 </h1>
 
                 <div className="mt-6 text-dark-main font-mono">
                   <p className="mt-2 text-dark-dim">
-                    Etherlink's new{" "}
-                    <span className="font-bold text-dark-main">
-                      sub-block latency
-                    </span>{" "}
-                    feature gives developers super-fast confirmation — around{" "}
-                    <span className="font-bold text-dark-main">
-                      10–20 milliseconds
-                    </span>{" "}
-                    — so they instantly know their transaction will make it into
-                    the next block.
+                    Etherlink 6.0 just unlocked Instant Confirmations, about 10–20ms per letter.
                   </p>
                   <p className="mt-2 text-dark-dim">
-                    We built this game to help you feel that speed. The pacer
-                    blocks move at 20ms. Your goal is to beat it.
+                    Blink and you'll miss it. Can your typing keep up?
                   </p>
-            </div>
+                </div>
 
                 <div className="mt-6 text-dark-main font-mono">
-                  <h2 className="text-xl font-bold">How to Win</h2>
+                  <h2 className="text-xl font-bold">How to Play</h2>
                   <ol className="list-none space-y-3 mt-3 text-dark-dim">
                     <li className="flex items-center">
                       <i className="fa fa-tachometer h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
-                      <span>
-                        <span className="font-bold text-dark-main">
-                          Race the Pacer:
-                        </span>{" "}
-                        Type the full text before the green blocks are
-                        completely formed.
-                      </span>
+                      <span><span className="font-bold text-dark-main">Type fast:</span> Finish the text before the timer runs out</span>
+                    </li>
+                    <li className="flex items-center">
+                      <i className="fa fa-bullseye h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
+                      <span><span className="font-bold text-dark-main">Stay accurate:</span> Mistakes lower your score</span>
                     </li>
                     <li className="flex items-center">
                       <i className="fa fa-trophy h-5 w-5 text-dark-highlight mr-3 flex-shrink-0" />
-                      <span>
-                        <span className="font-bold text-dark-main">
-                          Get a Rank:
-                        </span>{" "}
-                        Your rank is based on your typing speed and accuracy.
-                      </span>
+                      <span><span className="font-bold text-dark-main">Get ranked:</span> Your speed = your blockchain match</span>
                     </li>
                   </ol>
-            </div>
+                </div>
 
                 <div className="mt-6 rounded-lg border border-dark-dim/30 bg-dark-bg/50 p-4 text-sm font-mono">
                   <div className="text-dark-main">
-                    <div className="mb-1">
-                      <span className="font-bold text-dark-highlight">
-                        Blockchain Speed Ranks
-                      </span>
-          </div>
-                    <div className="text-dark-dim">
-                      Your typing speed determines which blockchain you match.
-                      Can you beat{" "}
-                      <a
-                        href="https://etherlink.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-dark-highlight hover:underline"
-                      >
-                        Etherlink
-                      </a>{" "}
-                      Sub-block's 20ms speed?
-      </div>
+                    <div className="mb-3">
+                      <span className="font-bold text-dark-highlight">Blockchain Speed Ranks</span>
+                    </div>
                   </div>
-                  <ul className="list-disc list-inside pl-4 mt-3 space-y-1 text-sm text-dark-dim">
-                    <li>
-                      <span className="font-bold text-dark-main">
-                        Etherlink:
-                      </span>{" "}
-                      &lt;=20ms / letter (Lightning fast!)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">
-                        Base/Unichain:
-                      </span>{" "}
-                      200ms / letter (Super fast!)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">Solana:</span>{" "}
-                      201-400ms / letter (Super fast!)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">
-                        Other ETH Layer 2s:
-                      </span>{" "}
-                      401-1000ms / letter (Fast!)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">Polygon:</span>{" "}
-                      1001-2000ms / letter (Quick!)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">
-                        Ethereum Mainnet:
-                      </span>{" "}
-                      2001-12000ms / letter (Standard speed)
-                    </li>
-                    <li>
-                      <span className="font-bold text-dark-main">Bitcoin:</span>{" "}
-                      &gt; 12000ms / letter (Slow and steady)
-                    </li>
+                  <ul className="list-none space-y-1.5 text-sm text-dark-dim">
+                    <li><span className="font-bold text-dark-main">Etherlink:</span> ≤20ms - Teleport mode 🤯 (Instant)</li>
+                    <li><span className="font-bold text-dark-main">Base / Unichain:</span> ≤200ms - Lightning ⚡</li>
+                    <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms - Rocket 🚀</li>
+                    <li><span className="font-bold text-dark-main">Other ETH L2s:</span> 401-1000ms - Fast-ish 🏃</li>
+                    <li><span className="font-bold text-dark-main">Polygon:</span> 1.1-2s - Coffee-break speed ☕</li>
+                    <li><span className="font-bold text-dark-main">Ethereum Mainnet:</span> 2.1-12s - Give-me-a-sec…⏳</li>
+                    <li><span className="font-bold text-dark-main">Bitcoin:</span> &gt;12s - Stop-for-lunch 🐢</li>
                   </ul>
                 </div>
 
