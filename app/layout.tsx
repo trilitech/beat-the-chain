@@ -24,7 +24,7 @@ const sedgwickAveDisplay = Sedgwick_Ave_Display({
 
 export const metadata: Metadata = {
   title: "Etherlink - Proof of Speed",
-  description: "Beat Etherlink sub-block times with this typing speed test.",
+  description: "Beat Etherlink Instant confirmations with this typing speed test.",
   icons: {
     icon: "/icon.svg",
   },

@@ -15,9 +15,9 @@ const ITEMS_PER_PAGE = 20;
 // Helper function to extract rank name (returns full rank with emoji)
 function getRankName(fullRank: string): string {
   if (!fullRank) return "";
-  // Handle legacy ranks (Sub-blocks, etc.)
+  // Handle legacy ranks (Instant confirmations, etc.)
   if (fullRank === "Etherlink/Base/Unichain" || fullRank === "Unichain/base/etherlink" || fullRank === "Etherlink/base/unichain") {
-    return "Sub-blocks";
+    return "Instant confirmations";
   }
   // Handle old rank format with colon (for backward compatibility)
   const colonIndex = fullRank.indexOf(":");

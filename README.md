@@ -1,16 +1,16 @@
 # Proof of Speed
 
-A typing game inspired by [monkeytype](https://monkeytype.com) that gives users a visual representation of sub-block confirmations on [Etherlink](https://etherlink.com).
+A typing game inspired by [monkeytype](https://monkeytype.com) that gives users a visual representation of Instant confirmations on [Etherlink](https://etherlink.com).
 
 **[🎮 Play the game →](https://beat-the-chain-zeta.vercel.app/)**
 
-[Etherlink](https://etherlink.com) is a [Tezos](https://tezos.com) EVM-compatible L2 that brings Ethereum compatibility to the Tezos ecosystem. Learn more about Etherlink's latest upgrade, [Ebisu](https://medium.com/@etherlink/announcing-ebisu-a-5th-upgrade-proposal-for-etherlink-mainnet-4dfdd1c8819e), which introduces sub-block latency features.
+[Etherlink](https://etherlink.com) is a [Tezos](https://tezos.com) EVM-compatible L2 that brings Ethereum compatibility to the Tezos ecosystem. Learn more about Etherlink's latest upgrade, [Ebisu](https://medium.com/@etherlink/announcing-ebisu-a-5th-upgrade-proposal-for-etherlink-mainnet-4dfdd1c8819e), which introduces Instant confirmations features.
 
 ## What It Is
 
-**Proof of Speed** is an interactive typing test that challenges players to type faster than Etherlink's sub-block confirmation speed. As you type, green blocks appear on screen at the same pace as Etherlink's sub-block confirmations (200ms per letter), creating a visual representation of how fast sub-blocks are being created on the network.
+**Proof of Speed** is an interactive typing test that challenges players to type faster than Etherlink's Instant confirmations speed. As you type, green blocks appear on screen at the same pace as Etherlink's Instant confirmations (200ms per letter), creating a visual representation of how fast Instant confirmations are being created on the network.
 
-Etherlink's new sub-block latency feature gives developers super-fast confirmation — around 10–20 milliseconds — so they instantly know their transaction will make it into the next block.
+Etherlink's new Instant confirmations feature gives developers super-fast confirmation — around 10–20 milliseconds — so they instantly know their transaction will make it into the next block.
 
 It's different from Base's Flashblocks because Etherlink uses a first-come, first-serve system, not a gas auction.
 

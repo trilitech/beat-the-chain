@@ -95,7 +95,7 @@ const DEFAULT_RESULTS = {
 const FALLBACK_SENTENCES = [
   "ten word sentence this is exactly 35",
   "another fast one for you to type quick",
-  "etherlink sub block latency is so fast",
+  "etherlink instant confirmations are so fast",
   "proof of speed with this one simple test",
   "pro gamer speed could win this one game",
 ];
@@ -598,7 +598,7 @@ export default function Home() {
     setResults(resultsData);
 
     // Save to Supabase only if it's a new best score (fire and forget - don't block UI)
-    // Rank is already "Sub-blocks" if applicable
+    // Rank is already "Instant confirmations" if applicable
     const rankForDB = rank;
     saveGameResult({
       player_name: playerName,
@@ -1123,9 +1123,15 @@ export default function Home() {
 
   const handleShare = useCallback(
     async (platform?: "twitter" | "facebook" | "linkedin") => {
-    const shareText = `I scored ${results.score} on Proof of Speed! ${results.lps} letters per second with ${results.accuracy} accuracy. Can you beat Etherlink's sub-blocks?`;
-      const shareUrl =
-        typeof window !== "undefined" ? window.location.href : "";
+      const rankName = getRankName(results.rank);
+      const shareText = `Rank: ${rankName}
+
+I scored ${results.score} on Proof of Speed! ${results.lps} letters per second with ${results.accuracy} accuracy.
+
+Can you beat Etherlink's instant confirmations? 
+
+https://proofofspeed.vercel.app/`;
+      const shareUrl = "https://proofofspeed.vercel.app/";
     
     // Capture screenshot of results screen
     let screenshotFile: File | null = null;
@@ -1979,7 +1985,7 @@ export default function Home() {
               <div className="text-center mb-6">
                 {(() => {
                   const msPerLetter = parseFloat(results.msPerLetter) || 0;
-                  const isFasterThanSubblocks =
+                  const isFasterThanInstantConfirmations =
                     msPerLetter < 20 &&
                     results.speedComparison === "Instant confirmations";
                   
@@ -1987,7 +1993,7 @@ export default function Home() {
                     <div className="flex items-start justify-center gap-8 flex-wrap">
                       <div className="flex flex-col">
                         <div className="text-lg text-dark-dim mb-2">
-                          {isFasterThanSubblocks
+                          {isFasterThanInstantConfirmations
                             ? "You were faster than"
                             : "You were as fast as"}
                         </div>
