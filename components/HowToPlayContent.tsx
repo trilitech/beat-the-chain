@@ -3,7 +3,7 @@ export default function HowToPlayContent() {
     <>
       <div className="mt-6 text-dark-main font-mono">
         <p className="mt-2 text-dark-dim">
-          Etherlink 6.0 just unlocked Instant Confirmations, about 10–20ms per letter.
+          <span className="text-white">Etherlink 6.0</span> just unlocked <span className="text-white">Instant Confirmations</span>, about <span className="text-white">10–20ms</span> per letter.
         </p>
         <p className="mt-2 text-dark-dim">
           Blink and you'll miss it. Can your typing keep up?
