@@ -3,7 +3,7 @@ export default function HowToPlayContent() {
     <>
       <div className="mt-6 text-dark-main font-mono">
         <p className="mt-2 text-dark-dim">
-          <span className="text-white">Etherlink 6.0</span> just unlocked <span className="text-white">Instant Confirmations</span>, about <span className="text-white">10–15ms</span> per letter.
+          <span className="text-white">Etherlink 6.0</span> just unlocked <span className="text-white">Instant Confirmations</span>, about <span className="text-white">10–50ms</span> per letter.
         </p>
         <p className="mt-2 text-dark-dim">
           Blink and you'll miss it. Can your typing keep up?
@@ -35,7 +35,7 @@ export default function HowToPlayContent() {
           </div>
         </div>
         <ul className="list-none space-y-1.5 text-sm text-dark-dim">
-          <li><span className="font-bold text-dark-main">Etherlink:</span> ≤15ms - Teleport mode 🤯 (Instant)</li>
+          <li><span className="font-bold text-dark-main">Etherlink:</span> ≤50ms - Teleport mode 🤯 (Instant)</li>
           <li><span className="font-bold text-dark-main">Base / Unichain:</span> ≤200ms - Lightning ⚡</li>
           <li><span className="font-bold text-dark-main">Solana:</span> 201-400ms - Rocket 🚀</li>
           <li><span className="font-bold text-dark-main">Other ETH L2s:</span> 401-1000ms - Fast-ish 🏃</li>

@@ -174,7 +174,7 @@ const CHAINS = [
   { name: 'ETH L2s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' },
   { name: 'Solana', ms: 400, color: getBestContrastColor('sol', '#DC1FFF'), icon: 'sol', displayTime: null, gradientColor: '#66F9A1' },
   { name: 'Base', ms: 200, color: getBestContrastColor('base', '#0052FF'), icon: 'base', displayTime: null, gradientColor: '#0052FF' },
-  { name: 'Instant confirmations', ms: 15, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' },
+  { name: 'Instant confirmations', ms: 50, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' },
 ];
 
 const CHAIN_POSITIONS = CHAINS.map((chain, index) => ({
@@ -209,7 +209,7 @@ const BRIGHTER_GRADIENT_STRING = `${lightenColor(CHAINS[0].gradientColor, 0.2)} 
 
 // Function to calculate position based on ms - only this depends on user input
 const getSpeedPosition = (ms: number): number => {
-  const clampedMs = Math.max(15, Math.min(600000, ms));
+  const clampedMs = Math.max(50, Math.min(600000, ms));
   
   for (let i = 0; i < BLOCKCHAIN_THRESHOLDS.length - 1; i++) {
     const lower = BLOCKCHAIN_THRESHOLDS[i + 1];
@@ -531,9 +531,9 @@ export default function Home() {
     const comparisonMs = msPerLetter - SUB_BLOCK_SPEED_MS;
 
     // "You were as fast as" is based purely on speed (msPerLetter) - not accuracy-adjusted
-    // Categories: Instant confirmations (15ms), Base (200ms), Solana (400ms), ETH L2s (1000ms), Polygon (2000ms), Ethereum Mainnet (12000ms), Bitcoin (600000ms)
+    // Categories: Instant confirmations (50ms), Base (200ms), Solana (400ms), ETH L2s (1000ms), Polygon (2000ms), Ethereum Mainnet (12000ms), Bitcoin (600000ms)
     let speedComparison = "Bitcoin";
-    if (msPerLetter <= 15) speedComparison = "Instant confirmations";
+    if (msPerLetter <= 50) speedComparison = "Instant confirmations";
     else if (msPerLetter <= 200) speedComparison = "Base";
     else if (msPerLetter <= 400) speedComparison = "Solana";
     else if (msPerLetter <= 1000) speedComparison = "ETH L2s";
@@ -2111,7 +2111,7 @@ https://proofofspeed.vercel.app/`;
                                       className="text-[10px] font-mono leading-tight"
                                       style={{ color: blockchain.color }}
                                     >
-                                      15ms
+                                      50ms
                                     </div>
                                   </div>
                                 </div>
