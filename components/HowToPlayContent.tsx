@@ -29,11 +29,6 @@ export default function HowToPlayContent() {
       </div>
 
       <div className="mt-6 rounded-lg border border-dark-dim/30 bg-dark-bg/50 p-4 text-sm font-mono">
-        <div className="text-dark-main">
-          <div className="mb-3">
-            <span className="font-bold text-dark-highlight">Blockchain Speed Ranks</span>
-          </div>
-        </div>
         <div className="flex text-sm text-dark-dim">
           <div className="pr-4 border-r border-dark-highlight">
             <div className="font-bold text-dark-highlight pb-2 mb-2 border-b border-dark-highlight">Blockchain</div>
