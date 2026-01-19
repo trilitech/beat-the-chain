@@ -33,25 +33,24 @@ export default function HowToPlayContent() {
           <div className="pr-4 border-r border-dark-highlight">
             <div className="font-bold text-dark-highlight pb-2 mb-2 border-b border-dark-highlight">Blockchain</div>
             <div className="space-y-1.5">
-              <div className="font-bold text-dark-main">Etherlink</div>
-              <div className="font-bold text-dark-main">Base / Unichain</div>
-              <div className="font-bold text-dark-main">Solana</div>
-              <div className="font-bold text-dark-main">Other ETH L2s</div>
-              <div className="font-bold text-dark-main">Polygon</div>
-              <div className="font-bold text-dark-main">Ethereum Mainnet</div>
-              <div className="font-bold text-dark-main">Bitcoin</div>
+              <div><span className="font-bold text-dark-main">Etherlink:</span> ≤50ms - Teleport mode 🤯 (Instant)</div>
+              <div><span className="font-bold text-dark-main">Base / Unichain:</span> ≤200ms - Lightning ⚡</div>
+              <div><span className="font-bold text-dark-main">Solana:</span> 201-400ms - Rocket 🚀</div>
+              <div><span className="font-bold text-dark-main">Other ETH L2s:</span> 401-1000ms - Fast-ish 🏃</div>
+              <div><span className="font-bold text-dark-main">Polygon:</span> 1.1-2s - Coffee-break speed ☕</div>
+              <div><span className="font-bold text-dark-main">Ethereum Mainnet:</span> 2.1-12s - Give-me-a-sec…⏳</div>
+              <div><span className="font-bold text-dark-main">Bitcoin:</span> &gt;12s - Stop-for-lunch 🐢</div>
             </div>
           </div>
           <div className="pl-4">
             <div className="font-bold text-dark-highlight pb-2 mb-2 border-b border-dark-highlight">Speed Ranks</div>
             <div className="space-y-1.5">
-              <div>≤50ms - Teleport mode 🤯 (Instant)</div>
-              <div>≤200ms - Lightning ⚡</div>
-              <div>201-400ms - Rocket 🚀</div>
-              <div>401-1000ms - Fast-ish 🏃</div>
-              <div>1.1-2s - Coffee-break speed ☕</div>
-              <div>2.1-12s - Give-me-a-sec…⏳</div>
-              <div>&gt;12s - Stop-for-lunch 🐢</div>
+              <div><span className="font-bold text-dark-main">Master:</span> Grandmaster Blockbreaker — Score ≥ 20</div>
+              <div><span className="font-bold text-dark-main">Diamond:</span> Turbo Typelord — Score ≥ 15 (and &lt; 20)</div>
+              <div><span className="font-bold text-dark-main">Platinum:</span> Chain Slayer — Score ≥ 10 (and &lt; 15)</div>
+              <div><span className="font-bold text-dark-main">Gold:</span> Speed Operator — Score ≥ 5 (and &lt; 10)</div>
+              <div><span className="font-bold text-dark-main">Silver:</span> Latency Warrior — Score ≥ 2 (and &lt; 5)</div>
+              <div><span className="font-bold text-dark-main">Bronze:</span> Block Rookie — Score &lt; 2</div>
             </div>
           </div>
         </div>
