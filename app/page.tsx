@@ -173,7 +173,7 @@ const CHAINS = [
   { name: 'ETH L2s', ms: 1000, color: getBestContrastColor('eth', '#87ceeb'), icon: 'eth', displayTime: null, gradientColor: '#627EEA' },
   { name: 'Solana', ms: 400, color: getBestContrastColor('sol', '#DC1FFF'), icon: 'sol', displayTime: null, gradientColor: '#66F9A1' },
   { name: 'Base', ms: 200, color: getBestContrastColor('base', '#0052FF'), icon: 'base', displayTime: null, gradientColor: '#0052FF' },
-  { name: 'Instant confirmations', ms: 50, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' },
+  { name: 'Etherlink', ms: 50, color: getBestContrastColor('xtz', '#38FF9C'), icon: 'etherlink', displayTime: null, gradientColor: '#A6E000' },
 ];
 
 const CHAIN_POSITIONS = CHAINS.map((chain, index) => ({
@@ -2050,8 +2050,8 @@ https://proofofspeed.vercel.app/`;
                                 minWidth: "100px",
                               }}
                             >
-                              {blockchain.name === "Instant confirmations" ? (
-                                // Special layout for Instant confirmations - icon inline with text, time below
+                              {blockchain.name === "Etherlink" ? (
+                                // Special layout for Etherlink - icon inline with text, time below
                                 <div className="flex items-center gap-1">
                                   {/* Text Content */}
                                   <div className="flex flex-col">
