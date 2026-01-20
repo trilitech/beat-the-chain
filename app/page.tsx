@@ -18,45 +18,18 @@ import { GAME_MODES, SUB_BLOCK_SPEED_MS, type GameMode } from "../lib/constants"
 
 // Rank descriptions
 const RANK_DESCRIPTIONS: Record<string, string> = {
-  "Typing Rookie 🥉": "You just spawned in. Still learning WASD and WPM.",
+  "Typing Rookie 🥉": "You just spawned in. Still learning WASD… and WPM.",
   "Latency Warrior 🥈": "Better timing, fewer missed blocks. Ping still questionable.",
   "Speed Operator 🥇": "Clean combos, crisp keystrokes. Starting to look pro.",
   "Chain Slayer ⚔️": "Outpaces block time like it's a low-level mob. Mechanical skill unlocked.",
   "Turbo Typelord 💎": "Butterfly-tapping the keyboard. Zero lag. Zero mercy.",
-  "Grandmaster of Speed 👑": "S-tier reflexes. Full APM demon. The final boss of block speed",
+  "Grandmaster of Speed 👑": "S-tier reflexes. Full APM demon. The final boss of block speed.",
 };
 
-// Mapping from old rank names to new emoji versions
-const RANK_NAME_MAP: Record<string, string> = {
-  "Bronze: Block Rookie": "Typing Rookie 🥉",
-  "Silver: Latency Warrior": "Latency Warrior 🥈",
-  "Gold: Speed Operator": "Speed Operator 🥇",
-  "Platinum: Chain Slayer": "Chain Slayer ⚔️",
-  "Diamond: Turbo Typelord": "Turbo Typelord 💎",
-  "Master: Grandmaster Blockbreaker": "Grandmaster of Speed 👑",
-  // Also handle without colons
-  "Bronze": "Typing Rookie 🥉",
-  "Silver": "Latency Warrior 🥈",
-  "Gold": "Speed Operator 🥇",
-  "Platinum": "Chain Slayer ⚔️",
-  "Diamond": "Turbo Typelord 💎",
-  "Master": "Grandmaster of Speed 👑",
-};
-
-// Helper function to get rank name with emoji (handles both old and new formats)
+// Helper function to get rank name (returns as-is since we now use emoji format directly)
 function getRankName(fullRank: string): string {
   if (!fullRank) return "";
-  // If it's already in the new format (has emoji), return as-is
-  if (RANK_NAME_MAP[fullRank]) {
-    return RANK_NAME_MAP[fullRank];
-  }
-  // Check if it's already a new format rank (contains emoji)
-  const hasEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(fullRank);
-  if (hasEmoji) {
-    return fullRank;
-  }
-  // Try to map old format
-  return RANK_NAME_MAP[fullRank] || fullRank;
+  return fullRank;
 }
 
 // Helper function to format rank name for dropdown (emoji before text)
@@ -588,7 +561,7 @@ export default function Home() {
     // - Best player: 14.07 score (15-word, 100% acc) and 14.03 score (30-word, 98.8% acc after normalization)
     // - Grandmaster threshold set at 14.0 to make best player achieve it
     // - Other thresholds set proportionally below
-    let rank = "Bronze: Block Rookie";
+    let rank = "Typing Rookie 🥉";
     
     // Minimum accuracy thresholds for ranks (prevents spam-typing)
     // Based on best player achieving 98.8% in 30-word mode
@@ -599,19 +572,19 @@ export default function Home() {
     const MIN_ACCURACY_LATENCY = 80;
     
     // Rank thresholds matching HowToPlayContent.tsx display
-    // Master: ≥14, Diamond: ≥11, Platinum: ≥7, Gold: ≥4, Silver: ≥1, Bronze: <1
+    // Grandmaster: ≥14, Turbo Typelord: ≥11, Chain Slayer: ≥7, Speed Operator: ≥4, Latency Warrior: ≥1, Typing Rookie: <1
     if (finalScore >= 14 && accuracy >= MIN_ACCURACY_GRANDMASTER) {
-      rank = "Master: Grandmaster Blockbreaker";
+      rank = "Grandmaster of Speed 👑";
     } else if (finalScore >= 11 && accuracy >= MIN_ACCURACY_TURBO) {
-      rank = "Diamond: Turbo Typelord";
+      rank = "Turbo Typelord 💎";
     } else if (finalScore >= 7 && accuracy >= MIN_ACCURACY_CHAIN) {
-      rank = "Platinum: Chain Slayer";
+      rank = "Chain Slayer ⚔️";
     } else if (finalScore >= 4 && accuracy >= MIN_ACCURACY_SPEED) {
-      rank = "Gold: Speed Operator";
+      rank = "Speed Operator 🥇";
     } else if (finalScore >= 1 && accuracy >= MIN_ACCURACY_LATENCY) {
-      rank = "Silver: Latency Warrior";
+      rank = "Latency Warrior 🥈";
     } else {
-      rank = "Bronze: Block Rookie";
+      rank = "Typing Rookie 🥉";
     }
 
     const resultsData = {

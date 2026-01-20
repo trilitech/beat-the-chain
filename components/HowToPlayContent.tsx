@@ -45,12 +45,12 @@ export default function HowToPlayContent() {
           <div className="pl-4">
             <div className="font-bold text-dark-highlight pb-2 mb-2 border-b border-dark-highlight">Speed Ranks</div>
             <div className="space-y-1.5">
-              <div><span className="font-bold text-dark-main">Master:</span> Grandmaster Blockbreaker — Score ≥ 14</div>
-              <div><span className="font-bold text-dark-main">Diamond:</span> Turbo Typelord — Score ≥ 11 (and &lt; 14)</div>
-              <div><span className="font-bold text-dark-main">Platinum:</span> Chain Slayer — Score ≥ 7 (and &lt; 11)</div>
-              <div><span className="font-bold text-dark-main">Gold:</span> Speed Operator — Score ≥ 4 (and &lt; 7)</div>
-              <div><span className="font-bold text-dark-main">Silver:</span> Latency Warrior — Score ≥ 1 (and &lt; 4)</div>
-              <div><span className="font-bold text-dark-main">Bronze:</span> Block Rookie — Score &lt; 1</div>
+              <div><span className="font-bold text-dark-main">Grandmaster of Speed 👑</span> — Score ≥ 14</div>
+              <div><span className="font-bold text-dark-main">Turbo Typelord 💎</span> — Score ≥ 11 (and &lt; 14)</div>
+              <div><span className="font-bold text-dark-main">Chain Slayer ⚔️</span> — Score ≥ 7 (and &lt; 11)</div>
+              <div><span className="font-bold text-dark-main">Speed Operator 🥇</span> — Score ≥ 4 (and &lt; 7)</div>
+              <div><span className="font-bold text-dark-main">Latency Warrior 🥈</span> — Score ≥ 1 (and &lt; 4)</div>
+              <div><span className="font-bold text-dark-main">Typing Rookie 🥉</span> — Score &lt; 1</div>
             </div>
           </div>
         </div>
