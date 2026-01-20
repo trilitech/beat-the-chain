@@ -790,6 +790,9 @@ export default function Home() {
 
   const handleKeydown = useCallback(
     (event: KeyboardEvent) => {
+      // Reject programmatically generated events (prevents auto-typer scripts)
+      if (!event.isTrusted) return;
+
       // NEW: Block all game input if overlay is visible
       if (showOverlay) return;
 
