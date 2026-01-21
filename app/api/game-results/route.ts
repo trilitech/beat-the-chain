@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "../../../lib/supabase";
 import type { GameResult } from "../../../lib/types";
 
+const ALLOWED_RANKS = [
+  "Grandmaster of Speed 👑",
+  "Turbo Typelord 💎",
+  "Chain Slayer ⚔️",
+  "Speed Operator 🥇",
+  "Latency Warrior 🥈",
+  "Typing Rookie 🥉",
+];
+
 export async function POST(request: NextRequest) {
   try {
     const body: GameResult = await request.json();
@@ -10,6 +19,14 @@ export async function POST(request: NextRequest) {
     if (!body.player_name || body.score === undefined || body.game_mode === undefined) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate rank (must be one of the allowed ranks)
+    if (!body.rank || !ALLOWED_RANKS.includes(body.rank)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid rank" },
         { status: 400 }
       );
     }
