@@ -488,13 +488,10 @@ export default function Home() {
 
   const startTest = useCallback(() => {
     if (stateRef.current.testActive) return;
-    
     // Blur any focused buttons to prevent spacebar from triggering them
     if (document.activeElement instanceof HTMLButtonElement) {
       document.activeElement.blur();
     }
-    
-    // Start the game immediately (don't wait for API call)
     stateRef.current.testActive = true;
     stateRef.current.startTime = performance.now();
     setTestStarted(true);
