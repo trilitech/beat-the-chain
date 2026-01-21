@@ -489,8 +489,8 @@ export default function Home() {
   const startTest = useCallback(() => {
     if (stateRef.current.testActive) return;
     
-    // Blur any focused element to prevent spacebar from triggering button clicks
-    if (document.activeElement instanceof HTMLElement) {
+    // Blur any focused buttons to prevent spacebar from triggering them
+    if (document.activeElement instanceof HTMLButtonElement) {
       document.activeElement.blur();
     }
     
