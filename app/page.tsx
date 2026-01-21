@@ -224,6 +224,8 @@ type GameState = {
   testFinished: boolean;
   errorPositions: Set<number>; // Track positions where errors occurred
   correctedErrors: Set<number>; // Track positions where errors were corrected
+  runId: string | null;
+  runToken: string | null;
 };
 
 // Wavy Text Component
@@ -392,6 +394,8 @@ export default function Home() {
     testFinished: false,
     errorPositions: new Set(),
     correctedErrors: new Set(),
+    runId: null,
+    runToken: null,
   });
 
   const tabPressedRef = useRef(false);
@@ -470,6 +474,8 @@ export default function Home() {
     stateRef.current.currentIndex = 0;
     stateRef.current.errorPositions.clear();
     stateRef.current.correctedErrors.clear();
+    stateRef.current.runId = null;
+    stateRef.current.runToken = null;
     setResults({ ...DEFAULT_RESULTS });
     setTestStarted(false);
     setTestFinished(false);
@@ -482,11 +488,48 @@ export default function Home() {
 
   const startTest = useCallback(() => {
     if (stateRef.current.testActive) return;
+    
+    // Blur any focused element to prevent spacebar from triggering button clicks
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    // Start the game immediately (don't wait for API call)
     stateRef.current.testActive = true;
     stateRef.current.startTime = performance.now();
     setTestStarted(true);
     setTestFinished(false);
-  }, [gameMode]); // Note: This function depends on gameMode
+    
+    // Fetch session token in the background (non-blocking)
+    fetch("/api/start-run", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        player_name: playerName,
+        game_mode: gameMode,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success && result.run_id && result.token) {
+          stateRef.current.runId = result.run_id;
+          stateRef.current.runToken = result.token;
+        } else {
+          console.error("Failed to start game run:", result.error);
+          // If API fails, reset the game state
+          stateRef.current.testActive = false;
+          setTestStarted(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error starting game run:", error);
+        // If API fails, reset the game state
+        stateRef.current.testActive = false;
+        setTestStarted(false);
+      });
+  }, [gameMode, playerName]);
 
   const endGame = useCallback(() => {
     if (!stateRef.current.testActive) return;
@@ -600,18 +643,23 @@ export default function Home() {
 
     setResults(resultsData);
 
-    // Save to Supabase only if it's a new best score (fire and forget - don't block UI)
-    // Rank is already "Instant confirmations" if applicable
-    const rankForDB = rank;
+    if (!stateRef.current.runId || !stateRef.current.runToken) {
+      console.error("Missing run session - cannot save game result");
+      return;
+    }
+
     saveGameResult({
+      run_id: stateRef.current.runId,
+      token: stateRef.current.runToken,
       player_name: playerName,
-      score: parseFloat(finalScore.toFixed(2)),
+      game_mode: gameMode,
       lps: parseFloat(lettersPerSecond.toFixed(2)),
       accuracy: parseFloat(Math.max(accuracy, 0).toFixed(1)),
-      rank: rankForDB,
       time: parseFloat(durationSec.toFixed(2)),
       ms_per_letter: parseFloat(msPerLetter.toFixed(0)),
-      game_mode: gameMode,
+      total_letters: lettersCount,
+      uncorrected_errors: uncorrectedErrors,
+      corrected_errors: correctedErrors,
       isTwitterUser: isTwitterAuth,
     })
       .then((result) => {
