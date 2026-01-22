@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@mynaui/icons-react": "0.3.9",
     "@supabase/supabase-js": "^2.81.1",
+    "bad-words": "^4.0.0",
     "cryptocurrency-icons": "^0.18.1",
     "font-awesome": "^4.7.0",
     "framer-motion": "^12.23.24",

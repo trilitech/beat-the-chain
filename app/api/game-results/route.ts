@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "../../../lib/supabase";
 import type { GameResultSubmission } from "../../../lib/types";
 import { calculateScore, calculateRank } from "../../../lib/server-scoring";
 import crypto from "crypto";
+import { isNameValid } from "../../../lib/name-validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,10 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const nameRegex = /^[a-zA-Z0-9._-]{3,50}$/;
-    if (!nameRegex.test(body.player_name)) {
+    const nameValidation = isNameValid(body.player_name);
+    if (!nameValidation.valid) {
       return NextResponse.json(
-        { success: false, error: "Invalid player name format" },
+        { success: false, error: nameValidation.error },
         { status: 400 }
       );
     }

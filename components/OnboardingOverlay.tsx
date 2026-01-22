@@ -119,7 +119,7 @@ export default function OnboardingOverlay({ onComplete, onSignInWithTwitter }: O
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    // Validate player name (3-50 characters, alphanumeric, dots, hyphens, underscores only)
+    // Validate player name format (server will also validate profanity)
     const nameRegex = /^[a-zA-Z0-9._-]{3,50}$/;
     if (nameRegex.test(trimmedName)) {
       onComplete(trimmedName);
@@ -230,10 +230,15 @@ export default function OnboardingOverlay({ onComplete, onSignInWithTwitter }: O
                       <AnimatePresence>
                         {(() => {
                           const trimmed = name.trim();
-                          const nameRegex = /^[a-zA-Z0-9._-]{3,50}$/;
-                          const hasError = trimmed && !nameRegex.test(trimmed);
+                          if (!trimmed) return null;
                           
-                          return hasError ? (
+                          // Validate synchronously for format, async for profanity
+                          const nameRegex = /^[a-zA-Z0-9._-]{3,50}$/;
+                          const formatError = !nameRegex.test(trimmed);
+                          
+                          // For profanity check, we'll validate on submit (async)
+                          // Format error shows immediately for better UX
+                          return formatError ? (
                             <motion.p
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
