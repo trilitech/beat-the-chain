@@ -1394,6 +1394,7 @@ Can you beat Etherlink's instant confirmations?`;
     setUserProfile(null);
     setAllUserScores([]);
     setShowUserMenu(false);
+    initGame(); // Reset to main game screen so they land there after re-entering name or Twitter
     setShowOverlay(true);
   };
 
