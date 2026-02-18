@@ -10,6 +10,8 @@ export type GameResult = {
   ms_per_letter: number;
   game_mode: number; // 15 or 30 words
   isTwitterUser?: boolean; // true if signed in with Twitter, false if name-based
+  /** Leaderboard scope: which leaderboard this result belongs to (e.g. "default", "event-feb-2025"). Set via NEXT_PUBLIC_LEADERBOARD_SCOPE. */
+  leaderboard_scope?: string;
   created_at?: string;
 };
 
@@ -25,6 +27,7 @@ export type LeaderboardEntry = {
   ms_per_letter: number;
   game_mode: number;
   isTwitterUser?: boolean; // true if signed in with Twitter, false if name-based
+  leaderboard_scope?: string;
   created_at: string;
 };
 

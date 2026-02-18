@@ -1,6 +1,14 @@
 import { supabase, supabaseAnonymous } from "./supabase";
 import type { GameResult, LeaderboardEntry } from "./types";
 
+/** Current leaderboard scope (e.g. "default", "event-feb-2025"). Set via NEXT_PUBLIC_LEADERBOARD_SCOPE. Same app can show different leaderboards per deployment. */
+export function getLeaderboardScope(): string {
+  if (typeof process === "undefined" || !process.env?.NEXT_PUBLIC_LEADERBOARD_SCOPE) {
+    return "default"
+  }
+  return process.env.NEXT_PUBLIC_LEADERBOARD_SCOPE
+}
+
 
 /**
  * Get best score from localStorage
@@ -69,13 +77,16 @@ export async function saveGameResult(result: GameResult): Promise<{ success: boo
       return { success: true, isNewBest: false };
     }
 
+    const scope = result.leaderboard_scope ?? getLeaderboardScope();
+    const payload = { ...result, leaderboard_scope: scope };
+
     // Call API route which uses service role key for writes
     const response = await fetch("/api/game-results", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify(payload),
     });
 
     const apiResult = await response.json();
@@ -123,15 +134,18 @@ function calculateAccuracyWeightedScore(lps: number, accuracy: number): number {
 }
 
 /**
- * Get leaderboard entries for a specific game mode
+ * Get leaderboard entries for a specific game mode (and optional scope).
  * Sorted by accuracy-weighted score (lps * (accuracy/100)^2)
  * @param gameMode - The game mode (15 or 30 words)
  * @param limit - Number of entries to return (default: 10)
+ * @param scope - Leaderboard scope (default: getLeaderboardScope()). Use same scope as deployment to show the right board.
  */
 export async function getLeaderboard(
   gameMode: number,
-  limit: number = 10
+  limit: number = 10,
+  scope?: string
 ): Promise<{ data: LeaderboardEntry[] | null; error?: string }> {
+  const leaderboardScope = scope ?? getLeaderboardScope();
   try {
     // Note: Leaderboard queries are public reads and don't require authentication
     // Same logic works for name-based and Twitter auth users
@@ -140,13 +154,17 @@ export async function getLeaderboard(
     let error: any = null;
     
     try {
-      // Use anonymous client for public reads - ensures same behavior for all users
-      const queryPromise = supabaseAnonymous
+      let query = supabaseAnonymous
         .from("game_results")
         .select("*")
         .eq("game_mode", gameMode)
         .limit(10000);
-      
+      if (leaderboardScope === "default") {
+        query = query.or("leaderboard_scope.eq.default,leaderboard_scope.is.null");
+      } else {
+        query = query.eq("leaderboard_scope", leaderboardScope);
+      }
+
       // Add timeout to prevent hanging (15 seconds to account for slower connections)
       const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {
         setTimeout(() => {
@@ -154,7 +172,7 @@ export async function getLeaderboard(
         }, 15000);
       });
       
-      const queryResult = await Promise.race([queryPromise, timeoutPromise]);
+      const queryResult = await Promise.race([query, timeoutPromise]);
       
       if ('data' in queryResult && queryResult.data === null && queryResult.error) {
         // Timeout occurred
@@ -245,12 +263,14 @@ export function getUserProfile(playerName: string): {
 }
 
 /**
- * Get the user's best score for a specific game mode
+ * Get the user's best score for a specific game mode (and optional scope).
  */
 export async function getUserBestScore(
   playerName: string,
-  gameMode: number
-  ): Promise<{ data: LeaderboardEntry | null; error?: string }> {
+  gameMode: number,
+  scope?: string
+): Promise<{ data: LeaderboardEntry | null; error?: string }> {
+  const leaderboardScope = scope ?? getLeaderboardScope();
   try {
     // Note: User score queries are public reads and don't require authentication
     // Same logic works for name-based and Twitter auth users
@@ -259,15 +279,18 @@ export async function getUserBestScore(
     let error: any = null;
     
     try {
-      // Use anonymous client for public reads - ensures same behavior for all users
-      const queryPromise = supabaseAnonymous
+      let query = supabaseAnonymous
         .from("game_results")
         .select("*")
         .eq("player_name", playerName)
-        .eq("game_mode", gameMode)
-        .order("score", { ascending: false })
-        .limit(1)
-        .single();
+        .eq("game_mode", gameMode);
+      if (leaderboardScope === "default") {
+        query = query.or("leaderboard_scope.eq.default,leaderboard_scope.is.null");
+      } else {
+        query = query.eq("leaderboard_scope", leaderboardScope);
+      }
+      query = query.order("score", { ascending: false }).limit(1).single();
+      const queryPromise = query;
       
       // Add timeout to prevent hanging (15 seconds to account for slower connections)
       const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {

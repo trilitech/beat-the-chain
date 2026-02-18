@@ -53,6 +53,8 @@ NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
+**Optional – different leaderboard per deployment:** Set `NEXT_PUBLIC_LEADERBOARD_SCOPE` (e.g. `event-feb-2025`) to show a separate leaderboard. Same app build can show different boards by env. Omit or leave unset for the default leaderboard. Run the migration in `supabase/migrations/` (add `leaderboard_scope` to `game_results`) first.
+
 ⚠️ **Important**: Never commit `.env.local` to git! It's already in `.gitignore`.
 
 ### Running the Development Server

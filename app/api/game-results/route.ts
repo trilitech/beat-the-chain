@@ -91,14 +91,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const scope = (body.leaderboard_scope && /^[a-zA-Z0-9._-]{1,64}$/.test(body.leaderboard_scope))
+      ? body.leaderboard_scope
+      : "default";
+
     const supabase = getSupabaseServerClient();
-    
-    // Check if we have an existing record by player_name and game_mode
-    const { data: existingRecords, error: queryError } = await supabase
+
+    let existingQuery = supabase
       .from("game_results")
       .select("id, score")
       .eq("player_name", body.player_name)
-      .eq("game_mode", body.game_mode)
+      .eq("game_mode", body.game_mode);
+    if (scope === "default") {
+      existingQuery = existingQuery.or("leaderboard_scope.eq.default,leaderboard_scope.is.null");
+    } else {
+      existingQuery = existingQuery.eq("leaderboard_scope", scope);
+    }
+    const { data: existingRecords, error: queryError } = await existingQuery
       .order("score", { ascending: false })
       .limit(1);
 
@@ -122,6 +131,7 @@ export async function POST(request: NextRequest) {
           time: body.time,
           ms_per_letter: body.ms_per_letter,
           isTwitterUser: body.isTwitterUser ?? false,
+          leaderboard_scope: scope,
         })
         .eq("id", existingRecord.id)
         .select();
@@ -161,6 +171,7 @@ export async function POST(request: NextRequest) {
             ms_per_letter: body.ms_per_letter,
             game_mode: body.game_mode,
             isTwitterUser: body.isTwitterUser ?? false,
+            leaderboard_scope: scope,
           },
         ])
         .select();
