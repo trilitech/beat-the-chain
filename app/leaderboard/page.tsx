@@ -35,13 +35,16 @@ export default function LeaderboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+
   useEffect(() => {
-    const fetchLeaderboard = async () => {
-      setLoading(true);
-      setError(null);
-      // Fetch a large number of entries for pagination (500 should be enough)
+    const fetchLeaderboard = async (showLoading: boolean) => {
+      if (showLoading) {
+        setLoading(true);
+        setError(null);
+      }
       const { data, error: fetchError } = await getLeaderboard(gameMode, 500);
-      
+
       if (fetchError) {
         setError(fetchError);
         setLeaders([]);
@@ -49,11 +52,18 @@ export default function LeaderboardPage() {
         setLeaders(data || []);
       }
       setLoading(false);
-      // Reset to page 1 when game mode changes
-      setCurrentPage(1);
+      if (showLoading) setCurrentPage(1);
     };
 
-    fetchLeaderboard();
+    fetchLeaderboard(true);
+
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchLeaderboard(false);
+      }
+    }, REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(id);
   }, [gameMode]);
 
   // Calculate pagination

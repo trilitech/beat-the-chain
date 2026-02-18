@@ -1382,8 +1382,13 @@ Can you beat Etherlink's instant confirmations?`;
   };
 
   const handleResetPlayer = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore if no session or sign-out fails
+    }
     clearPlayerData(playerName); // This clears localStorage including avatar
-    
+
     setIsTwitterAuth(false);
     setPlayerName("you");
     setUserProfile(null);
@@ -1711,6 +1716,17 @@ Can you beat Etherlink's instant confirmations?`;
         </header>
 
         <div className="relative z-10 flex flex-col items-center px-6 py-4 space-y-4 -mt-5 group-[.test-finished]:-mt-5">
+          {playerName && playerName !== "you" && (
+            <button
+              type="button"
+              onClick={handleResetPlayer}
+              className="mb-1 rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold font-mono text-black transition-transform hover:scale-[1.02] cursor-pointer"
+              style={{ backgroundColor: "#39ff9c" }}
+              title="Switch to a new player"
+            >
+              New Player
+            </button>
+          )}
           <div className="text-center">
             <span className="font-nfs text-[2.8125rem] text-dark-highlight">
               Proof of Speed
