@@ -1,5 +1,5 @@
 import { supabase, supabaseAnonymous } from "./supabase";
-import type { GameResult, LeaderboardEntry } from "./types";
+import type { GameResult, GameResultSubmission, LeaderboardEntry } from "./types";
 
 /** Current leaderboard scope (e.g. "default", "event-feb-2025"). Set via NEXT_PUBLIC_LEADERBOARD_SCOPE. Same app can show different leaderboards per deployment. */
 export function getLeaderboardScope(): string {
@@ -69,18 +69,12 @@ export function setLocalRecordId(playerName: string, gameMode: number, id: numbe
  * Also updates localStorage cache
  * Uses API route with service role key for writes
  */
-export async function saveGameResult(result: GameResult): Promise<{ success: boolean; error?: string; isNewBest?: boolean; id?: number }> {
+export async function saveGameResult(result: GameResultSubmission): Promise<{ success: boolean; error?: string; isNewBest?: boolean; id?: number }> {
   try {
-    // Check localStorage first (fast check)
-    const localBest = getLocalBestScore(result.player_name, result.game_mode);
-    if (localBest !== null && result.score <= localBest) {
-      return { success: true, isNewBest: false };
-    }
-
-    const scope = result.leaderboard_scope ?? getLeaderboardScope();
-    const payload = { ...result, leaderboard_scope: scope };
+    const payload = { ...result, leaderboard_scope: result.leaderboard_scope ?? getLeaderboardScope() };
 
     // Call API route which uses service role key for writes
+    // Server now computes score and rank, so we don't check localStorage here
     const response = await fetch("/api/game-results", {
       method: "POST",
       headers: {
@@ -95,21 +89,16 @@ export async function saveGameResult(result: GameResult): Promise<{ success: boo
       return { success: false, error: apiResult.error || "Failed to save game result" };
     }
 
-    // Update localStorage cache
-    if (apiResult.isNewBest) {
-      setLocalBestScore(result.player_name, result.game_mode, result.score);
+    // Update localStorage cache - fetch from server since score is computed server-side
+    const bestScoreResult = await getUserBestScore(
+      result.player_name,
+      result.game_mode
+    );
+    if (bestScoreResult.data) {
+      setLocalBestScore(result.player_name, result.game_mode, bestScoreResult.data.score);
       if (apiResult.id) {
         setLocalRecordId(result.player_name, result.game_mode, apiResult.id);
-      }
-    } else {
-      // If not a new best, we still want to ensure localStorage is up to date
-      // Fetch the current best to update cache
-      const bestScoreResult = await getUserBestScore(
-        result.player_name,
-        result.game_mode
-      );
-      if (bestScoreResult.data) {
-        setLocalBestScore(result.player_name, result.game_mode, bestScoreResult.data.score);
+      } else if (bestScoreResult.data.id) {
         setLocalRecordId(result.player_name, result.game_mode, bestScoreResult.data.id);
       }
     }

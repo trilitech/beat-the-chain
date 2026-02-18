@@ -15,6 +15,33 @@ export type GameResult = {
   created_at?: string;
 };
 
+export type StartRunRequest = {
+  player_name: string;
+  game_mode: number;
+};
+
+export type StartRunResponse = {
+  run_id: string;
+  token: string;
+  expires_at: number;
+};
+
+export type GameResultSubmission = {
+  run_id: string;
+  token: string;
+  player_name: string;
+  game_mode: number;
+  lps: number;
+  accuracy: number;
+  time: number;
+  ms_per_letter: number;
+  total_letters: number;
+  uncorrected_errors: number;
+  corrected_errors: number;
+  isTwitterUser?: boolean;
+  leaderboard_scope?: string;
+};
+
 // Leaderboard entry type
 export type LeaderboardEntry = {
   id: number;
