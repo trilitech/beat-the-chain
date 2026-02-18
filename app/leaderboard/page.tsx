@@ -35,7 +35,7 @@ export default function LeaderboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const REFRESH_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+  const REFRESH_INTERVAL_MS = 30 * 1000; // 30 seconds
 
   useEffect(() => {
     const fetchLeaderboard = async (showLoading: boolean) => {
