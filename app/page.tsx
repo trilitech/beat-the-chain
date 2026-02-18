@@ -1717,15 +1717,28 @@ Can you beat Etherlink's instant confirmations?`;
 
         <div className="relative z-10 flex flex-col items-center px-6 py-4 space-y-4 -mt-5 group-[.test-finished]:-mt-5">
           {playerName && playerName !== "you" && (
-            <button
-              type="button"
-              onClick={handleResetPlayer}
-              className="mb-1 rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold font-mono text-black transition-transform hover:scale-[1.02] cursor-pointer"
-              style={{ backgroundColor: "#39ff9c" }}
-              title="Switch to a new player"
-            >
-              New Player
-            </button>
+            <div className="mb-1 flex items-center gap-3">
+              {testFinished && (
+                <button
+                  type="button"
+                  onClick={initGame}
+                  className="rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold font-mono text-black transition-transform hover:scale-[1.02] cursor-pointer"
+                  style={{ backgroundColor: "#39ff9c" }}
+                  title="Play again"
+                >
+                  Try again
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleResetPlayer}
+                className="rounded-full border border-dark-dim/30 py-2 px-4 text-sm font-bold font-mono text-black transition-transform hover:scale-[1.02] cursor-pointer"
+                style={{ backgroundColor: "#39ff9c" }}
+                title="Switch to a new player"
+              >
+                New Player
+              </button>
+            </div>
           )}
           <div className="text-center">
             <span className="font-nfs text-[2.8125rem] text-dark-highlight">
