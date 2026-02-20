@@ -1,6 +1,6 @@
 # Proof of Speed
 
-<!-- eth-denver-day-2 -->
+<!-- eth-denver-day-3 -->
 
 A typing game inspired by [monkeytype](https://monkeytype.com) that gives users a visual representation of Instant confirmations on [Etherlink](https://etherlink.com).
 
